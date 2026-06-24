@@ -1,0 +1,1 @@
+export const useSettings = () => ({ settings: null, loading: false }); export const formatMoney = (v:any) => String(v);

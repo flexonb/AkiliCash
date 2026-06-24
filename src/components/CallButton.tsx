@@ -1,0 +1,1 @@
+import React from "react"; export const CallButton = () => <div/>; export const formatTel = () => ""; export const dialPhone = () => {};

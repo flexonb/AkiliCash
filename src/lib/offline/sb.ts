@@ -1,0 +1,1 @@
+export const loadTableOffline = async () => []; export const isOffline = false; export const syncOutbox = async () => {}; export const sbInsert = async () => {};

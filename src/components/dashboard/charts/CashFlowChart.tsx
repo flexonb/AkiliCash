@@ -1,0 +1,1 @@
+import React from "react"; export const CashFlowChart = () => <div/>; export const formatTel = () => ""; export const dialPhone = () => {};

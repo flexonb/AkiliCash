@@ -1,0 +1,1 @@
+import { z } from "zod"; export const phoneSchema = z.string(); export const formatTel = () => ""; export const dialPhone = () => {}; export const formatPhone = () => ""; export const isValidPhone = () => true;

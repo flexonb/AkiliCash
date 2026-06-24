@@ -1,0 +1,1 @@
+import React from "react"; export const CloseDrawerDialog = () => <div/>; export const logAudit = () => {}; export const buildSchedule = () => []; export const allocatePayments = () => {}; export const generateDailyReport = () => {}; export const loadTableOffline = async () => []; export const formatMoney = (m:any) => m;

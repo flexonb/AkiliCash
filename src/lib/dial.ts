@@ -1,0 +1,1 @@
+export const formatTel = () => ""; export const dialPhone = () => {};
