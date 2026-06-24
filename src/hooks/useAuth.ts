@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { User, Session } from "firebase/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 
 export type AppRole = "admin" | "staff" | "client";
 
@@ -12,7 +12,7 @@ export function useAuth() {
 
   useEffect(() => {
     let mounted = true;
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, payload) => {
+    const { data: sub } = api.auth.onAuthStateChange((_event, payload) => {
       const u = payload.user;
       if (!mounted) return;
       setUser(u ?? null);
@@ -26,7 +26,7 @@ export function useAuth() {
       }
     });
 
-    supabase.auth.getUser().then(({ data: { user: u } }) => {
+    api.auth.getUser().then(({ data: { user: u } }) => {
       if (!mounted) return;
       setUser(u ?? null);
       if (u) {
@@ -44,7 +44,7 @@ export function useAuth() {
   }, []);
 
   async function fetchProfile(userId: string) {
-    const { data } = await supabase.from("profiles").eq("id", userId).maybeSingle();
+    const { data } = await api.from("profiles").eq("id", userId).maybeSingle();
     setProfile(data);
     setProfileLoaded(true);
   }

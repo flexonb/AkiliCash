@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
 import { Banknote, TrendingUp, AlertTriangle, Wallet } from "lucide-react";
 import { formatMoney } from "@/hooks/useSettings";
@@ -33,7 +33,7 @@ export default function ClientDashboard() {
     setLoading(true);
     try {
       // 1. Find all client records linked to this national ID
-      const { data: clients } = await supabase.from("clients").eq("national_id", profile.national_id);
+      const { data: clients } = await api.from("clients").eq("national_id", profile.national_id);
       if (!clients?.length) {
         setLoans([]);
         return;
@@ -41,7 +41,7 @@ export default function ClientDashboard() {
       const clientIds = clients.map((c: any) => c.id);
 
       // 2. Fetch all loans for these client IDs
-      const { data: allLoans } = await supabase.from("loans").in("client_id", clientIds);
+      const { data: allLoans } = await api.from("loans").in("client_id", clientIds);
       if (!allLoans?.length) {
         setLoans([]);
         return;
@@ -49,7 +49,7 @@ export default function ClientDashboard() {
 
       // 3. Fetch all payments for these loans
       const loanIds = allLoans.map((l: any) => l.id);
-      const { data: pays } = await supabase.from("payments").in("loan_id", loanIds);
+      const { data: pays } = await api.from("payments").in("loan_id", loanIds);
       const validPays = (pays || []).filter((p: any) => !p.voided_at);
 
       // 4. Determine company details (since we added multi-tenancy, loans/clients should map to companies eventually. For now, use basic RWF)

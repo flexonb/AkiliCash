@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +46,7 @@ export default function AuditLog() {
   useEffect(() => {
     if (!isAdmin) return;
     (async () => {
-      const { data } = await supabase
+      const { data } = await api
         .from("audit_log")
         .select("*")
         .order("created_at", { ascending: false })
@@ -55,7 +55,7 @@ export default function AuditLog() {
       setRows(list);
       const ids = Array.from(new Set(list.map((r) => r.actor_id).filter(Boolean) as string[]));
       if (ids.length) {
-        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+        const { data: profs } = await api.from("profiles").select("id, full_name").in("id", ids);
         setActors(new Map((profs ?? []).map((p: any) => [p.id, p.full_name ?? p.id.slice(0, 8)])));
       }
     })();

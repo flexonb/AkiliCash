@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/AppCard";
 import { Button } from "@/components/ui/button";
 import { Navigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useSettings, formatMoney } from "@/hooks/useSettings";
 import { Download, ChevronDown, ChevronRight } from "lucide-react";
@@ -21,8 +21,8 @@ export default function Drawer() {
     if (!isAdmin) return;
     (async () => {
       const [{ data: cls }, { data: ses }] = await Promise.all([
-        supabase.from("drawer_closures").select("*").order("close_date", { ascending: false }),
-        supabase.from("drawer_sessions").select("*").order("opened_at", { ascending: false }),
+        api.from("drawer_closures").select("*").order("close_date", { ascending: false }),
+        api.from("drawer_sessions").select("*").order("opened_at", { ascending: false }),
       ]);
       setClosures(cls ?? []);
       setSessions(ses ?? []);
@@ -32,7 +32,7 @@ export default function Drawer() {
         ...((ses ?? []).map((s: any) => s.closed_by).filter(Boolean)),
       ]));
       if (ids.length) {
-        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+        const { data: profs } = await api.from("profiles").select("id, full_name").in("id", ids);
         setProfileMap(new Map((profs ?? []).map((p: any) => [p.id, p.full_name ?? p.id])));
       }
     })();
@@ -54,20 +54,20 @@ export default function Drawer() {
       const dayEnd = `${c.close_date}T23:59:59.999Z`;
       const ownerId = c.closed_by;
       const [{ data: pays }, { data: loans }, { data: missed }] = await Promise.all([
-        supabase
+        api
           .from("payments")
           .select("amount, paid_at, method, loan_id, created_by")
           .is("voided_at", null)
           .eq("created_by", ownerId)
           .gte("paid_at", dayStart)
           .lte("paid_at", dayEnd),
-        supabase
+        api
           .from("loans")
           .select("id, principal, charge, client_id, disbursed_at, created_by")
           .eq("created_by", ownerId)
           .gte("disbursed_at", dayStart)
           .lte("disbursed_at", dayEnd),
-        supabase.from("missed_payments").select("loan_id, client_id").eq("drawer_closure_id", c.id),
+        api.from("missed_payments").select("loan_id, client_id").eq("drawer_closure_id", c.id),
       ]);
       const allClientIds = Array.from(
         new Set([
@@ -77,20 +77,20 @@ export default function Drawer() {
       );
       const loanIds = Array.from(new Set((pays ?? []).map((p: any) => p.loan_id)));
       const { data: loanRows } = loanIds.length
-        ? await supabase.from("loans").select("id, client_id").in("id", loanIds)
+        ? await api.from("loans").select("id, client_id").in("id", loanIds)
         : { data: [] as any[] };
       const allIds = Array.from(new Set([...allClientIds, ...((loanRows ?? []).map((l: any) => l.client_id))]));
       const { data: clientRows } = allIds.length
-        ? await supabase.from("clients").select("id, full_name, phone").in("id", allIds)
+        ? await api.from("clients").select("id, full_name, phone").in("id", allIds)
         : { data: [] as any[] };
       const clientMap = new Map((clientRows ?? []).map((x: any) => [x.id, x]));
       const loanClientMap = new Map((loanRows ?? []).map((l: any) => [l.id, l.client_id]));
 
       const missedLoanIds = (missed ?? []).map((m: any) => m.loan_id);
       const { data: missedLoans } = missedLoanIds.length
-        ? await supabase.from("loans").select("id, total_repayable, client_id").in("id", missedLoanIds)
+        ? await api.from("loans").select("id, total_repayable, client_id").in("id", missedLoanIds)
         : { data: [] as any[] };
-      const { data: allPays2 } = await supabase
+      const { data: allPays2 } = await api
         .from("payments")
         .select("loan_id, amount")
         .is("voided_at", null);
@@ -101,7 +101,7 @@ export default function Drawer() {
 
       let closedByLabel = "—";
       if (c.closed_by) {
-        const { data: prof } = await supabase.from("profiles").select("full_name").eq("id", c.closed_by).maybeSingle();
+        const { data: prof } = await api.from("profiles").select("full_name").eq("id", c.closed_by).maybeSingle();
         closedByLabel = prof?.full_name ?? c.closed_by;
       }
 

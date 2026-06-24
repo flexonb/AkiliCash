@@ -3,7 +3,7 @@ import { z } from "zod";
 import { useConfirmSave } from "@/components/ConfirmSave";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,16 +37,16 @@ export default function Settings() {
   const confirmSave = useConfirmSave();
   const [loading, setLoading] = useState(false);
   const [team, setTeam] = useState<TeamRow[]>([]);
-  const [form, setForm] = useState({ business_name: "SenteFlaw", currency_code: "UGX", currency_symbol: "USh", business_phone: "", business_email: "", business_address: "" });
+  const [form, setForm] = useState({ business_name: "AkiliCash", currency_code: "UGX", currency_symbol: "USh", business_phone: "", business_email: "", business_address: "" });
   const [addOpen, setAddOpen] = useState(false);
 
   async function loadTeam() {
     // Fetch roles + join profile names manually to be safe across schema cache states
-    const { data: roles } = await supabase.from("user_roles").select("user_id, role");
+    const { data: roles } = await api.from("user_roles").select("user_id, role");
     const ids = Array.from(new Set((roles ?? []).map((r) => r.user_id)));
     let nameById = new Map<string, string | null>();
     if (ids.length) {
-      const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+      const { data: profiles } = await api.from("profiles").select("id, full_name").in("id", ids);
       nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
     }
     setTeam((roles ?? []).map((r) => ({ user_id: r.user_id, role: r.role as Role, full_name: nameById.get(r.user_id) ?? null })));
@@ -54,7 +54,7 @@ export default function Settings() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
+      const { data } = await api.from("settings").select("*").eq("id", 1).maybeSingle();
       if (data) setForm({ business_name: data.business_name, currency_code: data.currency_code, currency_symbol: data.currency_symbol, business_phone: (data as any).business_phone ?? "", business_email: (data as any).business_email ?? "", business_address: (data as any).business_address ?? "" });
       await loadTeam();
     })();
@@ -64,7 +64,7 @@ export default function Settings() {
     const ok = await confirmSave({ title: "Save settings?", summary: `Business: ${form.business_name} · ${form.currency_code} (${form.currency_symbol})` });
     if (!ok) return;
     setLoading(true);
-    const { error } = await supabase.from("settings").update(form).eq("id", 1);
+    const { error } = await api.from("settings").update(form).eq("id", 1);
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Settings saved. Reload to see changes everywhere.");
@@ -73,16 +73,16 @@ export default function Settings() {
   async function changeRole(row: TeamRow, newRole: Role) {
     if (newRole === row.role) return;
     if (newRole === "admin") {
-      const { error } = await supabase.from("user_roles").insert({ user_id: row.user_id, role: "admin" });
+      const { error } = await api.from("user_roles").insert({ user_id: row.user_id, role: "admin" });
       if (error) return toast.error(error.message);
     } else {
       // demote: remove admin role row
-      const { error } = await supabase.from("user_roles").delete().eq("user_id", row.user_id).eq("role", "admin");
+      const { error } = await api.from("user_roles").delete().eq("user_id", row.user_id).eq("role", "admin");
       if (error) return toast.error(error.message);
       // ensure staff exists
       const hasStaff = team.some((t) => t.user_id === row.user_id && t.role === "staff");
       if (!hasStaff) {
-        await supabase.from("user_roles").insert({ user_id: row.user_id, role: "staff" });
+        await api.from("user_roles").insert({ user_id: row.user_id, role: "staff" });
       }
     }
     toast.success("Role updated");
@@ -91,7 +91,7 @@ export default function Settings() {
 
   async function removeAccess(row: TeamRow) {
     if (row.user_id === user?.id) return toast.error("You cannot remove yourself.");
-    const { error } = await supabase.from("user_roles").delete().eq("user_id", row.user_id);
+    const { error } = await api.from("user_roles").delete().eq("user_id", row.user_id);
     if (error) return toast.error(error.message);
     toast.success("Access revoked");
     await loadTeam();
@@ -218,7 +218,7 @@ function AddUserDialog({ open, onOpenChange, onCreated }: { open: boolean; onOpe
 
   async function submit(values: z.infer<typeof newUserSchema>) {
     setSubmitting(true);
-    const { data, error } = await supabase.functions.invoke("admin-create-user", { body: values });
+    const { data, error } = await api.functions.invoke("admin-create-user", { body: values });
     setSubmitting(false);
     if (error || (data && (data as any).error)) {
       return toast.error((data as any)?.error ?? error?.message ?? "Failed to create user");

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ export default function Onboarding() {
       if (type === "company") {
         if (!companyName) throw new Error("Company name required");
         // Create company
-        const { data: comp, error: compErr } = await supabase.from("companies").insert({
+        const { data: comp, error: compErr } = await api.from("companies").insert({
           name: companyName,
           currency_code: "RWF",
           currency_symbol: "FRW"
@@ -36,7 +36,7 @@ export default function Onboarding() {
         if (compErr) throw compErr;
 
         // Create profile
-        const { error: profErr } = await supabase.from("profiles").insert({
+        const { error: profErr } = await api.from("profiles").insert({
           id: user.uid || user.id,
           full_name: user.displayName || user.email?.split("@")[0] || "Admin",
           user_type: "company_admin",
@@ -45,7 +45,7 @@ export default function Onboarding() {
         if (profErr) throw profErr;
 
         // Create initial settings
-        await supabase.from("settings").insert({
+        await api.from("settings").insert({
           id: 1, // We'll need a better way to link settings in multi-company
           business_name: companyName,
           currency_code: "RWF",
@@ -55,7 +55,7 @@ export default function Onboarding() {
       } else {
         if (!nationalId || !fullName) throw new Error("Full name and National ID required");
         // Create profile for client
-        const { error: profErr } = await supabase.from("profiles").insert({
+        const { error: profErr } = await api.from("profiles").insert({
           id: user.uid || user.id,
           full_name: fullName,
           user_type: "client",

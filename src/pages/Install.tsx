@@ -32,7 +32,7 @@ export default function Install() {
     <div className="max-w-2xl mx-auto p-4 md:p-8 space-y-6">
       <div className="text-center space-y-2">
         <Smartphone className="w-12 h-12 mx-auto text-primary" />
-        <h1 className="text-3xl font-bold">Install SenteFlaw</h1>
+        <h1 className="text-3xl font-bold">Install AkiliCash</h1>
         <p className="text-muted-foreground">
           Add to your home screen for one-tap access and offline use.
         </p>

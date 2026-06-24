@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/AppCard";
@@ -19,7 +19,7 @@ export default function Clients() {
   const [open, setOpen] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase.from("clients").select("*").order("full_name", { ascending: true });
+    const { data } = await api.from("clients").select("*").order("full_name", { ascending: true });
     setClients((data ?? []) as Client[]);
   };
 

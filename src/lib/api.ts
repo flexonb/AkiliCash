@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOu
 import { ref, getDownloadURL } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
 
-class SupabaseQueryBuilder {
+class ApiQueryBuilder {
   table: string;
   _select = "*";
   _eq: Record<string, any> = {};
@@ -121,7 +121,7 @@ class SupabaseQueryBuilder {
   }
 
   update(patch: any) {
-    const builder = new SupabaseQueryBuilder(this.table);
+    const builder = new ApiQueryBuilder(this.table);
     builder._isUpdate = true;
     builder._patch = patch;
     
@@ -137,7 +137,7 @@ class SupabaseQueryBuilder {
   }
 
   delete() {
-    const builder = new SupabaseQueryBuilder(this.table);
+    const builder = new ApiQueryBuilder(this.table);
     builder._isDelete = true;
     
     const chainable = {
@@ -151,7 +151,7 @@ class SupabaseQueryBuilder {
   }
 }
 
-export const supabase = {
+export const api = {
   auth: {
     getUser: async () => {
       await new Promise(r => setTimeout(r, 100)); // wait for auth init
@@ -189,7 +189,7 @@ export const supabase = {
     }
   },
   from: (table: string) => {
-    return new SupabaseQueryBuilder(table);
+    return new ApiQueryBuilder(table);
   },
   storage: {
     from: (bucket: string) => ({

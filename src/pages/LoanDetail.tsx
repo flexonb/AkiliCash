@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,15 +55,15 @@ export default function LoanDetail() {
   const load = async () => {
     if (!id) return;
     const [{ data: l }, { data: p }] = await Promise.all([
-      supabase.from("loans").select("*, clients(id, full_name, phone)").eq("id", id).maybeSingle(),
-      supabase.from("payments").select("*").eq("loan_id", id).is("voided_at", null).order("paid_at", { ascending: false }),
+      api.from("loans").select("*, clients(id, full_name, phone)").eq("id", id).maybeSingle(),
+      api.from("payments").select("*").eq("loan_id", id).is("voided_at", null).order("paid_at", { ascending: false }),
     ]);
     setLoan(l);
     setPayments(p ?? []);
 
     const ids = [l?.created_by, l?.approved_by, l?.rejected_by].filter(Boolean) as string[];
     if (ids.length) {
-      const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+      const { data: profs } = await api.from("profiles").select("id, full_name").in("id", ids);
       const map = new Map((profs ?? []).map((x: any) => [x.id, x.full_name ?? "—"]));
       setCreatedByName(map.get(l?.created_by) ?? "");
       setApprovedByName(map.get(l?.approved_by ?? l?.rejected_by) ?? "");
@@ -85,7 +85,7 @@ export default function LoanDetail() {
     }
     setBusy(true);
     const before = { ...loan };
-    const { error } = await supabase.from("loans").update(patch).eq("id", loan.id);
+    const { error } = await api.from("loans").update(patch).eq("id", loan.id);
     setBusy(false);
     if (error) return toast.error(error.message);
     await logAudit({ entity_type: "loan", entity_id: loan.id, action: "update", note: successMsg, before, after: { ...before, ...patch } });
@@ -97,7 +97,7 @@ export default function LoanDetail() {
     if (!voidTarget) return;
     if (!voidReason.trim()) return toast.error("Please enter a reason");
     setBusy(true);
-    const { data, error } = await supabase.from("payments").update({
+    const { data, error } = await api.from("payments").update({
       voided_at: new Date().toISOString(),
       voided_by: user?.id,
       void_reason: voidReason.trim(),

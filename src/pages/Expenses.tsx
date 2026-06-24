@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,8 +107,8 @@ export default function Expenses() {
 
   const load = async () => {
     const [{ data: e }, { data: r }] = await Promise.all([
-      supabase.from("expenses").select("*").is("voided_at", null).order("spent_at", { ascending: false }).limit(500),
-      supabase.from("recurring_expenses").select("*").order("created_at", { ascending: false }),
+      api.from("expenses").select("*").is("voided_at", null).order("spent_at", { ascending: false }).limit(500),
+      api.from("recurring_expenses").select("*").order("created_at", { ascending: false }),
     ]);
     setRows(e ?? []);
     setRecurring(r ?? []);
@@ -122,7 +122,7 @@ export default function Expenses() {
     });
     if (!ok) return;
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await api.auth.getUser();
     const newId = crypto.randomUUID();
     const { error, queued } = await sbInsert("expenses", {
       id: newId,
@@ -141,8 +141,8 @@ export default function Expenses() {
   async function voidExpense() {
     if (!voidTarget) return;
     if (!voidReason.trim()) return toast.error("Please enter a reason");
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase.from("expenses").update({
+    const { data: { user } } = await api.auth.getUser();
+    const { data, error } = await api.from("expenses").update({
       voided_at: new Date().toISOString(),
       voided_by: user?.id,
       void_reason: voidReason.trim(),
@@ -181,15 +181,15 @@ export default function Expenses() {
       confirmLabel: "Save correction",
     });
     if (!ok) return;
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await api.auth.getUser();
     // Void original
-    const { error: vErr } = await supabase.from("expenses").update({
+    const { error: vErr } = await api.from("expenses").update({
       voided_at: new Date().toISOString(), voided_by: user?.id, void_reason: editReason.trim(),
     }).eq("id", editTarget.id);
     if (vErr) return toast.error(vErr.message);
     await logAudit({ entity_type: "expense", entity_id: editTarget.id, action: "void", note: editReason.trim(), before: editTarget });
     // Insert replacement
-    const { data: inserted, error: iErr } = await supabase.from("expenses").insert({
+    const { data: inserted, error: iErr } = await api.from("expenses").insert({
       category: values.category, amount: values.amount, spent_at: values.spent_at,
       note: values.note || null, created_by: user?.id, replaces_id: editTarget.id,
     }).select("id").single();
@@ -213,8 +213,8 @@ export default function Expenses() {
     });
     if (!ok) return;
     setRecLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("recurring_expenses").insert({
+    const { data: { user } } = await api.auth.getUser();
+    const { error } = await api.from("recurring_expenses").insert({
       category: values.category,
       amount: values.amount,
       frequency: values.frequency,
@@ -232,25 +232,25 @@ export default function Expenses() {
   }
 
   async function postRecurring(t: any) {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await api.auth.getUser();
     const today = toISO(new Date());
-    const { error } = await supabase.from("expenses").insert({
+    const { error } = await api.from("expenses").insert({
       category: t.category, amount: t.amount, spent_at: today,
       note: t.note ? `${t.note} (recurring)` : "Recurring", created_by: user?.id,
     });
     if (error) return toast.error(error.message);
-    await supabase.from("recurring_expenses").update({ last_posted_on: today }).eq("id", t.id);
+    await api.from("recurring_expenses").update({ last_posted_on: today }).eq("id", t.id);
     toast.success(`Posted ${t.category}`);
     load();
   }
 
   async function toggleActive(t: any) {
-    await supabase.from("recurring_expenses").update({ active: !t.active }).eq("id", t.id);
+    await api.from("recurring_expenses").update({ active: !t.active }).eq("id", t.id);
     load();
   }
 
   async function deleteRecurring(t: any) {
-    const { error } = await supabase.from("recurring_expenses").delete().eq("id", t.id);
+    const { error } = await api.from("recurring_expenses").delete().eq("id", t.id);
     if (error) return toast.error(error.message);
     toast.success("Removed");
     load();

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate, Link } from "react-router-dom";
 import { LayoutDashboard, Users, Banknote, Receipt, Wallet, Settings as SettingsIcon, LogOut, Archive } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/AppAvatar";
 import {
@@ -102,7 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { settings } = useSettings();
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await api.auth.signOut();
     navigate("/auth");
   };
 
@@ -114,7 +114,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
       {/* Sidebar (desktop) */}
-      <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground">
+      <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <div className="p-6 border-b border-sidebar-border">
           <h1 className="text-xl font-bold tracking-tight">{isClient ? "AkiliCash" : settings.business_name}</h1>
           <p className="text-xs opacity-70 mt-1">{isClient ? "Borrower Dashboard" : "Microloan Management"}</p>

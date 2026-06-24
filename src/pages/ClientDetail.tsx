@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,19 +52,19 @@ export default function ClientDetail() {
   const load = async () => {
     if (!id) return;
     const [{ data: c }, { data: g }, { data: l }] = await Promise.all([
-      supabase.from("clients").select("*").eq("id", id).maybeSingle(),
-      supabase.from("guarantors").select("*").eq("client_id", id),
-      supabase.from("loans").select("*").eq("client_id", id).order("created_at", { ascending: false }),
+      api.from("clients").select("*").eq("id", id).maybeSingle(),
+      api.from("guarantors").select("*").eq("client_id", id),
+      api.from("loans").select("*").eq("client_id", id).order("created_at", { ascending: false }),
     ]);
     setClient(c);
     setGuarantors(g ?? []);
     setLoans(l ?? []);
     if (c?.id_photo_path) {
-      const { data } = await supabase.storage.from("client-photos").createSignedUrl(c.id_photo_path, 3600);
+      const { data } = await api.storage.from("client-photos").createSignedUrl(c.id_photo_path, 3600);
       setIdPhotoUrl(data?.signedUrl ?? null);
     } else setIdPhotoUrl(null);
     if (c?.passport_photo_path) {
-      const { data } = await supabase.storage.from("client-photos").createSignedUrl(c.passport_photo_path, 3600);
+      const { data } = await api.storage.from("client-photos").createSignedUrl(c.passport_photo_path, 3600);
       setPassportPhotoUrl(data?.signedUrl ?? null);
     } else setPassportPhotoUrl(null);
   };
@@ -77,7 +77,7 @@ export default function ClientDetail() {
 
   const toggleStatus = async () => {
     const next = isDormant ? "active" : "dormant";
-    const { error } = await supabase.from("clients").update({ status: next }).eq("id", client.id);
+    const { error } = await api.from("clients").update({ status: next }).eq("id", client.id);
     if (error) return toast.error(error.message);
     toast.success(next === "dormant" ? "Client marked dormant" : "Client reactivated");
     setConfirmStatus(false);
@@ -86,8 +86,8 @@ export default function ClientDetail() {
 
   const deleteClient = async () => {
     // Best-effort cleanup of dependents
-    await supabase.from("guarantors").delete().eq("client_id", client.id);
-    const { error } = await supabase.from("clients").delete().eq("id", client.id);
+    await api.from("guarantors").delete().eq("client_id", client.id);
+    const { error } = await api.from("clients").delete().eq("id", client.id);
     if (error) return toast.error(error.message);
     toast.success("Client deleted");
     navigate("/clients");

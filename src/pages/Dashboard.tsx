@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/AppCard";
 import { Button } from "@/components/ui/button";
 import { Banknote, Users, AlertTriangle, TrendingUp, Wallet, ArrowDownCircle, Receipt, Lock, Unlock } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { loadTableOffline } from "@/lib/offline/sb";
 import { CloseDrawerDialog } from "@/components/CloseDrawerDialog";
 import { OpenDrawerDialog } from "@/components/OpenDrawerDialog";
@@ -56,7 +56,7 @@ export default function Dashboard() {
       let active: OpenSession | null = null;
       if (typeof navigator === "undefined" || navigator.onLine) {
         try {
-          const { data } = await supabase
+          const { data } = await api
             .from("drawer_sessions")
             .select("id, opened_at, opening_balance, opened_by")
             .eq("opened_by", user.id)

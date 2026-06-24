@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,11 +30,11 @@ export default function Loans() {
 
   const load = async () => {
     const [{ data: loans }, { data: pays }] = await Promise.all([
-      supabase
+      api
         .from("loans")
         .select("id, principal, charge, total_repayable, interest_rate, duration_months, status, start_date, created_at, client_id, payment_frequency, clients(full_name, phone)")
         .order("created_at", { ascending: false }),
-      supabase.from("payments").select("id, amount, loan_id, paid_at").is("voided_at", null),
+      api.from("payments").select("id, amount, loan_id, paid_at").is("voided_at", null),
     ]);
     setRows(loans ?? []);
     setPayments(pays ?? []);
