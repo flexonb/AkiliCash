@@ -115,9 +115,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
       {/* Sidebar (desktop) */}
       <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-        <div className="p-6 border-b border-sidebar-border">
-          <h1 className="text-xl font-bold tracking-tight">{isClient ? "AkiliCash" : settings.business_name}</h1>
-          <p className="text-xs opacity-70 mt-1">{isClient ? "Borrower Dashboard" : "Microloan Management"}</p>
+        <div className="p-6 border-b border-sidebar-border flex items-center gap-3">
+          <img src="/app-icon.png" alt="Logo" className="w-8 h-8 rounded-full object-cover" />
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">{isClient ? "AkiliCash" : settings.business_name}</h1>
+            <p className="text-xs opacity-70 mt-1">{isClient ? "Borrower Dashboard" : "Microloan Management"}</p>
+          </div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map((item) => (
@@ -148,8 +151,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Mobile header */}
-      <header className="md:hidden flex items-center justify-between px-4 h-14 bg-sidebar text-sidebar-foreground">
-        <h1 className="font-bold">{isClient ? "AkiliCash" : settings.business_name}</h1>
+      <header className="md:hidden flex items-center justify-between px-4 h-14 bg-sidebar text-sidebar-foreground border-b border-sidebar-border">
+        <div className="flex items-center gap-2">
+          <img src="/app-icon.png" alt="Logo" className="w-6 h-6 rounded-full object-cover" />
+          <h1 className="font-bold">{isClient ? "AkiliCash" : settings.business_name}</h1>
+        </div>
         <div className="flex items-center gap-2">
           <OnlineIndicator />
           <UserMenu onSignOut={signOut} />

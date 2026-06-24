@@ -104,6 +104,7 @@ export default function Auth() {
       <div className="hidden md:flex flex-col justify-between p-12 bg-sidebar text-sidebar-foreground">
         <div>
           <div className="flex items-center gap-3">
+            <img src="/app-icon.png" alt="Logo" className="w-8 h-8 rounded-full object-cover" />
             <span className="text-xl font-bold tracking-tight">AkiliCash</span>
           </div>
         </div>
@@ -121,7 +122,8 @@ export default function Auth() {
       {/* Form panel */}
       <div className="flex items-center justify-center p-6">
         <Card className="w-full max-w-md p-8 shadow-elegant">
-          <div className="md:hidden flex items-center mb-8">
+          <div className="md:hidden flex items-center mb-8 gap-2">
+            <img src="/app-icon.png" alt="Logo" className="w-6 h-6 rounded-full object-cover" />
             <h1 className="text-2xl font-bold tracking-tight">AkiliCash</h1>
           </div>
           <h2 className="text-2xl font-bold mb-1 tracking-tight">{isSignUp ? "Create an account" : "Welcome back"}</h2>

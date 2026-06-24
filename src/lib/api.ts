@@ -49,6 +49,15 @@ class ApiQueryBuilder {
         return resolve({ data: null, error: null });
       }
 
+      if (this._eq.id !== undefined && Object.keys(this._eq).length === 1 && Object.keys(this._in).length === 0 && Object.keys(this._is).length === 0) {
+        const d = await getDoc(doc(db, this.table, String(this._eq.id)));
+        if (!d.exists()) {
+          return resolve({ data: this._maybeSingle ? null : (this._single ? null : []), error: null });
+        }
+        const data = { id: d.id, ...d.data() };
+        return resolve({ data: this._maybeSingle ? data : (this._single ? data : [data]), error: null });
+      }
+
       const q: any = collection(db, this.table);
       const conditions: any[] = [];
       for (const [col, val] of Object.entries(this._eq)) {
@@ -56,7 +65,9 @@ class ApiQueryBuilder {
       }
       for (const [col, vals] of Object.entries(this._in)) {
         if (vals && vals.length > 0) {
-          conditions.push(where(col, "in", vals.slice(0, 10)));
+          conditions.push(where(col, "in", vals.slice(0, 30)));
+        } else if (vals && vals.length === 0) {
+          return resolve({ data: this._maybeSingle ? null : (this._single ? null : []), error: null });
         }
       }
       for (const [col, val] of Object.entries(this._is)) {

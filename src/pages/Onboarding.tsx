@@ -32,7 +32,7 @@ export default function Onboarding() {
           name: companyName,
           currency_code: "RWF",
           currency_symbol: "FRW"
-        }).select("id").single();
+        });
         if (compErr) throw compErr;
 
         // Create profile and settings in parallel
@@ -62,7 +62,7 @@ export default function Onboarding() {
           full_name: fullName,
           user_type: "client",
           national_id: nationalId
-        }).select("id").single();
+        });
         if (profErr) throw profErr;
       }
 
@@ -79,7 +79,10 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-muted/30 flex items-center justify-center p-6">
       <Card className="w-full max-w-xl p-8 shadow-elegant">
-        <h1 className="text-3xl font-bold mb-2">Welcome to AkiliCash</h1>
+        <div className="flex items-center gap-3 mb-2">
+          <img src="/app-icon.png" alt="Logo" className="w-10 h-10 rounded-full object-cover" />
+          <h1 className="text-3xl font-bold">Welcome to AkiliCash</h1>
+        </div>
         <p className="text-muted-foreground mb-8">How will you be using the platform?</p>
 
         {!type && (
