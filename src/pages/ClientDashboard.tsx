@@ -25,7 +25,10 @@ export default function ClientDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!profile?.national_id) return;
+    if (!profile?.national_id) {
+      setLoading(false);
+      return;
+    }
     fetchData();
   }, [profile]);
 

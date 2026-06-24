@@ -35,22 +35,24 @@ export default function Onboarding() {
         }).select("id").single();
         if (compErr) throw compErr;
 
-        // Create profile
-        const { error: profErr } = await api.from("profiles").insert({
-          id: user.uid || user.id,
-          full_name: user.displayName || user.email?.split("@")[0] || "Admin",
-          user_type: "company_admin",
-          company_id: comp.id,
-        });
-        if (profErr) throw profErr;
+        // Create profile and settings in parallel
+        const [profRes, settingsRes] = await Promise.all([
+          api.from("profiles").insert({
+            id: user.uid || user.id,
+            full_name: user.displayName || user.email?.split("@")[0] || "Admin",
+            user_type: "company_admin",
+            company_id: comp.id,
+          }),
+          api.from("settings").insert({
+            id: 1, // We'll need a better way to link settings in multi-company
+            business_name: companyName,
+            currency_code: "RWF",
+            currency_symbol: "FRW"
+          })
+        ]);
 
-        // Create initial settings
-        await api.from("settings").insert({
-          id: 1, // We'll need a better way to link settings in multi-company
-          business_name: companyName,
-          currency_code: "RWF",
-          currency_symbol: "FRW"
-        });
+        if (profRes.error) throw profRes.error;
+        if (settingsRes.error) throw settingsRes.error;
 
       } else {
         if (!nationalId || !fullName) throw new Error("Full name and National ID required");
@@ -60,7 +62,7 @@ export default function Onboarding() {
           full_name: fullName,
           user_type: "client",
           national_id: nationalId
-        });
+        }).select("id").single();
         if (profErr) throw profErr;
       }
 

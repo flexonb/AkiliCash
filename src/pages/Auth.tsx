@@ -68,7 +68,16 @@ export default function Auth() {
     }
     
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if (error.message.includes("auth/operation-not-allowed")) {
+        toast.error("Authentication provider not enabled", {
+          description: "Please enable Email/Password authentication in your Firebase Console.",
+        });
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
     navigate("/");
   }
 
@@ -76,7 +85,16 @@ export default function Auth() {
     setLoading(true);
     const { error } = await (api as any).auth.signInWithGoogle();
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if (error.message.includes("auth/operation-not-allowed")) {
+        toast.error("Google Sign-in not enabled", {
+          description: "Please enable Google authentication in your Firebase Console.",
+        });
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
     navigate("/");
   }
 
