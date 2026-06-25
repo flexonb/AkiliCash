@@ -37,7 +37,7 @@ export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { settings } = useSettings();
-  const { isAdmin } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const [client, setClient] = useState<any>(null);
   const [guarantors, setGuarantors] = useState<any[]>([]);
   const [loans, setLoans] = useState<any[]>([]);
@@ -50,11 +50,11 @@ export default function ClientDetail() {
   const [confirmStatus, setConfirmStatus] = useState(false);
 
   const load = async () => {
-    if (!id) return;
+    if (!id || !profile?.company_id) return;
     const [{ data: c }, { data: g }, { data: l }] = await Promise.all([
-      api.from("clients").select("*").eq("id", id).maybeSingle(),
-      api.from("guarantors").select("*").eq("client_id", id),
-      api.from("loans").select("*").eq("client_id", id).order("created_at", { ascending: false }),
+      api.from("clients").select("*").eq("id", id).eq("company_id", profile.company_id).maybeSingle(),
+      api.from("guarantors").select("*").eq("client_id", id).eq("company_id", profile.company_id),
+      api.from("loans").select("*").eq("client_id", id).eq("company_id", profile.company_id).order("created_at", { ascending: false }),
     ]);
     setClient(c);
     setGuarantors(g ?? []);

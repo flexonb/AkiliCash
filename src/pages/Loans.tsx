@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 
 import { buildSchedule, allocatePayments } from "@/lib/schedule";
 
+import { useAuth } from "@/hooks/useAuth";
+
 const FILTERS = ["all", "pending", "approved", "active", "overdue", "completed", "rejected", "defaulted"] as const;
 type Filter = typeof FILTERS[number];
 
@@ -22,6 +24,7 @@ const statusVariant = (s: string): "default" | "secondary" | "destructive" | "ou
 };
 
 export default function Loans() {
+  const { profile } = useAuth();
   const { settings } = useSettings();
   const [rows, setRows] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -29,18 +32,20 @@ export default function Loans() {
   const [openNew, setOpenNew] = useState(false);
 
   const load = async () => {
+    if (!profile?.company_id) return;
     const [{ data: loans }, { data: pays }] = await Promise.all([
       api
         .from("loans")
         .select("id, principal, charge, total_repayable, interest_rate, duration_months, status, start_date, created_at, client_id, payment_frequency, clients(full_name, phone)")
+        .eq("company_id", profile.company_id)
         .order("created_at", { ascending: false }),
-      api.from("payments").select("id, amount, loan_id, paid_at").is("voided_at", null),
+      api.from("payments").select("id, amount, loan_id, paid_at").eq("company_id", profile.company_id).is("voided_at", null),
     ]);
     setRows(loans ?? []);
     setPayments(pays ?? []);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [profile?.company_id]);
 
   const paymentsByLoan = useMemo(() => {
     const m = new Map<string, any[]>();

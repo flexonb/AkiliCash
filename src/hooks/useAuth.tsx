@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    const { data: sub } = api.auth.onAuthStateChange((_event, payload) => {
+    const { data: sub } = api.auth.onAuthStateChange((_event: any, payload: any) => {
       const u = payload.user;
       if (!mounted) return;
       setUser(u ?? null);
@@ -39,17 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    api.auth.getUser().then(({ data: { user: u } }) => {
-      if (!mounted) return;
-      setUser(u ?? null);
-      if (u) {
-        fetchProfile(u.uid || u.id);
-      } else {
-        setProfileLoaded(true);
-      }
-      setSessionLoading(false);
-    });
-
     return () => {
       mounted = false;
       if (sub?.subscription?.unsubscribe) sub.subscription.unsubscribe();
@@ -60,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data } = await api.from("profiles").eq("id", userId).maybeSingle();
     setProfile(data);
     setProfileLoaded(true);
+    setSessionLoading(false);
   }
 
   const userType = profile?.user_type as "company_admin" | "company_staff" | "client" | undefined;

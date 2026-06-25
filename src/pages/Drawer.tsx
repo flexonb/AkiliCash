@@ -10,7 +10,7 @@ import { generateDailyReport } from "@/lib/dailyReport";
 import { toast } from "sonner";
 
 export default function Drawer() {
-  const { isAdmin, loading: authLoading } = useAuth();
+  const { profile, isAdmin, loading: authLoading } = useAuth();
   const { settings } = useSettings();
   const [closures, setClosures] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -18,11 +18,11 @@ export default function Drawer() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || !profile?.company_id) return;
     (async () => {
       const [{ data: cls }, { data: ses }] = await Promise.all([
-        api.from("drawer_closures").select("*").order("close_date", { ascending: false }),
-        api.from("drawer_sessions").select("*").order("opened_at", { ascending: false }),
+        api.from("drawer_closures").select("*").eq("company_id", profile.company_id).order("close_date", { ascending: false }),
+        api.from("drawer_sessions").select("*").eq("company_id", profile.company_id).order("opened_at", { ascending: false }),
       ]);
       setClosures(cls ?? []);
       setSessions(ses ?? []);
@@ -36,7 +36,7 @@ export default function Drawer() {
         setProfileMap(new Map((profs ?? []).map((p: any) => [p.id, p.full_name ?? p.id])));
       }
     })();
-  }, [isAdmin]);
+  }, [isAdmin, profile?.company_id]);
 
   const nameOf = (id?: string | null) => (id ? (profileMap.get(id) ?? id) : "—");
 

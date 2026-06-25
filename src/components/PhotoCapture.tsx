@@ -1,1 +1,8 @@
-import React from "react"; export const PhotoCapture = () => <div/>; export const logAudit = () => {}; export const buildSchedule = () => []; export const allocatePayments = () => {}; export const generateDailyReport = () => {}; export const loadTableOffline = async () => []; export const formatMoney = (m:any) => m;
+import React from "react";
+export const PhotoCapture = ({ value, onChange, label }: any) => {
+  return (
+    <div className="border border-dashed p-4 text-center text-muted-foreground rounded">
+      {label || "Photo Capture (Not implemented)"}
+    </div>
+  );
+};

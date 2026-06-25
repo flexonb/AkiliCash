@@ -1,1 +1,6 @@
-export const logAudit = () => {}; export const buildSchedule = () => []; export const allocatePayments = () => {}; export const generateDailyReport = () => {}; export const loadTableOffline = async () => []; export const useBackgroundSync = () => {}; export const useOutbox = () => {}; export const formatMoney = (m:any) => m;
+export const buildSchedule = (principal: number, interestRate: number, duration: number, frequency: string, startDate: string) => {
+  return [];
+};
+export const allocatePayments = (schedule: any[], payments: any[]) => {
+  return schedule;
+};

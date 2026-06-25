@@ -1,1 +1,1 @@
-export const logAudit = () => {}; export const buildSchedule = () => []; export const allocatePayments = () => {}; export const generateDailyReport = () => {}; export const loadTableOffline = async () => []; export const useBackgroundSync = () => {}; export const useOutbox = () => {}; export const formatMoney = (m:any) => m;
+export const generateDailyReport = () => {};

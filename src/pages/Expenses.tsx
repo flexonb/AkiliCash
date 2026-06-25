@@ -72,8 +72,8 @@ function nextDueDate(t: any): Date {
 const WEEKDAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
 export default function Expenses() {
+  const { profile, isStaff } = useAuth();
   const { settings } = useSettings();
-  const { isStaff } = useAuth();
   const confirmSave = useConfirmSave();
   const [rows, setRows] = useState<any[]>([]);
   const [recurring, setRecurring] = useState<any[]>([]);
@@ -106,14 +106,15 @@ export default function Expenses() {
   const recFreq = recForm.watch("frequency");
 
   const load = async () => {
+    if (!profile?.company_id) return;
     const [{ data: e }, { data: r }] = await Promise.all([
-      api.from("expenses").select("*").is("voided_at", null).order("spent_at", { ascending: false }).limit(500),
-      api.from("recurring_expenses").select("*").order("created_at", { ascending: false }),
+      api.from("expenses").select("*").eq("company_id", profile.company_id).is("voided_at", null).order("spent_at", { ascending: false }).limit(500),
+      api.from("recurring_expenses").select("*").eq("company_id", profile.company_id).order("created_at", { ascending: false }),
     ]);
     setRows(e ?? []);
     setRecurring(r ?? []);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [profile?.company_id]);
 
   async function submit(values: z.infer<typeof schema>) {
     const ok = await confirmSave({
@@ -126,6 +127,7 @@ export default function Expenses() {
     const newId = crypto.randomUUID();
     const { error, queued } = await sbInsert("expenses", {
       id: newId,
+      company_id: profile?.company_id,
       category: values.category, amount: values.amount, spent_at: values.spent_at,
       note: values.note || null, created_by: user?.id,
     });
@@ -190,6 +192,7 @@ export default function Expenses() {
     await logAudit({ entity_type: "expense", entity_id: editTarget.id, action: "void", note: editReason.trim(), before: editTarget });
     // Insert replacement
     const { data: insertedList, error: iErr } = await api.from("expenses").insert({
+      company_id: profile?.company_id,
       category: values.category, amount: values.amount, spent_at: values.spent_at,
       note: values.note || null, created_by: user?.id, replaces_id: editTarget.id,
     });
@@ -217,6 +220,7 @@ export default function Expenses() {
     setRecLoading(true);
     const { data: { user } } = await api.auth.getUser();
     const { error } = await api.from("recurring_expenses").insert({
+      company_id: profile?.company_id,
       category: values.category,
       amount: values.amount,
       frequency: values.frequency,
@@ -237,6 +241,7 @@ export default function Expenses() {
     const { data: { user } } = await api.auth.getUser();
     const today = toISO(new Date());
     const { error } = await api.from("expenses").insert({
+      company_id: profile?.company_id,
       category: t.category, amount: t.amount, spent_at: today,
       note: t.note ? `${t.note} (recurring)` : "Recurring", created_by: user?.id,
     });

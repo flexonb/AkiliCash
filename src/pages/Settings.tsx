@@ -33,11 +33,11 @@ const newUserSchema = z.object({
 });
 
 export default function Settings() {
-  const { isAdmin, user } = useAuth();
+  const { profile, isAdmin, user } = useAuth();
   const confirmSave = useConfirmSave();
   const [loading, setLoading] = useState(false);
   const [team, setTeam] = useState<TeamRow[]>([]);
-  const [form, setForm] = useState({ business_name: "AkiliCash", currency_code: "UGX", currency_symbol: "USh", business_phone: "", business_email: "", business_address: "" });
+  const [form, setForm] = useState({ business_name: "AkiliCash", currency_code: "RWF", currency_symbol: "FRW", business_phone: "", business_email: "", business_address: "" });
   const [addOpen, setAddOpen] = useState(false);
 
   async function loadTeam() {
@@ -54,17 +54,18 @@ export default function Settings() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await api.from("settings").select("*").eq("id", 1).maybeSingle();
+      if (!profile?.company_id) return;
+      const { data } = await api.from("settings").select("*").eq("id", profile.company_id).maybeSingle();
       if (data) setForm({ business_name: data.business_name, currency_code: data.currency_code, currency_symbol: data.currency_symbol, business_phone: (data as any).business_phone ?? "", business_email: (data as any).business_email ?? "", business_address: (data as any).business_address ?? "" });
       await loadTeam();
     })();
-  }, []);
+  }, [profile?.company_id]);
 
   async function save() {
     const ok = await confirmSave({ title: "Save settings?", summary: `Business: ${form.business_name} · ${form.currency_code} (${form.currency_symbol})` });
     if (!ok) return;
     setLoading(true);
-    const { error } = await api.from("settings").update(form).eq("id", 1);
+    const { error } = await api.from("settings").update(form).eq("id", profile?.company_id);
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Settings saved. Reload to see changes everywhere.");

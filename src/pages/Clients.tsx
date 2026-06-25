@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/AppCard";
@@ -13,17 +14,19 @@ interface Client { id: string; full_name: string; phone: string; address: string
 type Filter = "all" | "active" | "dormant";
 
 export default function Clients() {
+  const { profile } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState(false);
 
   const load = async () => {
-    const { data } = await api.from("clients").select("*").order("full_name", { ascending: true });
+    if (!profile?.company_id) return;
+    const { data } = await api.from("clients").select("*").eq("company_id", profile.company_id).order("full_name", { ascending: true });
     setClients((data ?? []) as Client[]);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [profile?.company_id]);
 
   const filtered = clients
     .filter((c) => filter === "all" ? true : (c.status ?? "active") === filter)

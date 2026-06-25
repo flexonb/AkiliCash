@@ -33,7 +33,7 @@ const statusVariant = (s: string): "default" | "secondary" | "destructive" | "ou
 export default function LoanDetail() {
   const { id } = useParams();
   const { settings } = useSettings();
-  const { user, isAdmin } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const [loan, setLoan] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [createdByName, setCreatedByName] = useState<string>("");
@@ -53,10 +53,10 @@ export default function LoanDetail() {
   const [editDatesNote, setEditDatesNote] = useState("");
 
   const load = async () => {
-    if (!id) return;
+    if (!id || !profile?.company_id) return;
     const [{ data: l }, { data: p }] = await Promise.all([
-      api.from("loans").select("*, clients(id, full_name, phone)").eq("id", id).maybeSingle(),
-      api.from("payments").select("*").eq("loan_id", id).is("voided_at", null).order("paid_at", { ascending: false }),
+      api.from("loans").select("*, clients(id, full_name, phone)").eq("id", id).eq("company_id", profile.company_id).maybeSingle(),
+      api.from("payments").select("*").eq("loan_id", id).eq("company_id", profile.company_id).is("voided_at", null).order("paid_at", { ascending: false }),
     ]);
     setLoan(l);
     setPayments(p ?? []);

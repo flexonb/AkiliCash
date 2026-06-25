@@ -31,7 +31,7 @@ interface OpenSession {
 
 export default function Dashboard() {
   const { settings } = useSettings();
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const [stats, setStats] = useState({ activeLoans: 0, outstanding: 0, overdue: 0, dayCollected: 0, monthCollected: 0, clients: 0, dayCashOut: 0, dayExpenses: 0, dayFees: 0, drawerBalance: 0 });
   const [closeOpen, setCloseOpen] = useState(false);
   const [openOpen, setOpenOpen] = useState(false);
@@ -68,7 +68,7 @@ export default function Dashboard() {
         } catch { /* offline fallback below */ }
       }
       if (!active) {
-        const cached = await loadTableOffline<any>("drawer_sessions");
+        const cached = await loadTableOffline<any>("drawer_sessions", "*", profile?.company_id);
         const open = cached
           .filter((s) => !s.closed_at && s.opened_by === user.id)
           .sort((a, b) => +new Date(b.opened_at) - +new Date(a.opened_at))[0];
@@ -83,17 +83,17 @@ export default function Dashboard() {
       }
       setSessionChecked(true);
     })();
-  }, [user, refreshKey]);
+  }, [user, profile?.company_id, refreshKey]);
 
   // KPI cards — offline-first
   useEffect(() => {
     if (!user) return;
     (async () => {
       const [clientsAll, loansAll, paysAll, expAll] = await Promise.all([
-        loadTableOffline<any>("clients", "id"),
-        loadTableOffline<any>("loans", "id, client_id, principal, charge, total_repayable, status, start_date, disbursed_at, duration_months, payment_frequency, created_by"),
-        loadTableOffline<any>("payments", "id, amount, paid_at, loan_id, voided_at, created_by"),
-        loadTableOffline<any>("expenses", "id, amount, spent_at, created_at, voided_at, created_by"),
+        loadTableOffline<any>("clients", "id", profile?.company_id),
+        loadTableOffline<any>("loans", "id, client_id, principal, charge, total_repayable, status, start_date, disbursed_at, duration_months, payment_frequency, created_by", profile?.company_id),
+        loadTableOffline<any>("payments", "id, amount, paid_at, loan_id, voided_at, created_by", profile?.company_id),
+        loadTableOffline<any>("expenses", "id, amount, spent_at, created_at, voided_at, created_by", profile?.company_id),
       ]);
       const pays = paysAll.filter((p: any) => !p.voided_at);
       const exps = expAll.filter((e: any) => !e.voided_at);
@@ -118,7 +118,7 @@ export default function Dashboard() {
       const todaysDisbursements: Array<{ id: string; client: string; principal: number; charge: number; net: number; at: Date }> = [];
       const clientById = new Map<string, any>(clientsAll.map((c: any) => [c.id, c]));
       // Prefer a richer client cache when available.
-      const clientsRich = await loadTableOffline<any>("clients", "id, full_name, phone");
+      const clientsRich = await loadTableOffline<any>("clients", "id, full_name, phone", profile?.company_id);
       clientsRich.forEach((c: any) => clientById.set(c.id, c));
 
       loansAll.forEach((l: any) => {
@@ -191,16 +191,16 @@ export default function Dashboard() {
 
   // Analytics data — offline-first; the charts compute from the full set client-side.
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || !profile?.company_id) return;
     (async () => {
       const fromMs = +range.from;
       const toMs = +range.to;
       const fromDate = range.from.toISOString().slice(0, 10);
       const toDate = range.to.toISOString().slice(0, 10);
       const [loansData, paysAll, expAll] = await Promise.all([
-        loadTableOffline<any>("loans", "id, principal, total_repayable, status, start_date, disbursed_at, duration_months, payment_frequency"),
-        loadTableOffline<any>("payments", "id, loan_id, amount, paid_at, voided_at"),
-        loadTableOffline<any>("expenses", "id, amount, spent_at, voided_at"),
+        loadTableOffline<any>("loans", "id, principal, total_repayable, status, start_date, disbursed_at, duration_months, payment_frequency", profile.company_id),
+        loadTableOffline<any>("payments", "id, loan_id, amount, paid_at, voided_at", profile.company_id),
+        loadTableOffline<any>("expenses", "id, amount, spent_at, voided_at", profile.company_id),
       ]);
       const pays = paysAll.filter((p: any) => !p.voided_at);
       const exps = expAll.filter((e: any) => !e.voided_at);

@@ -1,1 +1,5 @@
-export const logAudit = () => {}; export const buildSchedule = () => []; export const allocatePayments = () => {}; export const generateDailyReport = () => {}; export const loadTableOffline = async () => []; export const useBackgroundSync = () => {}; export const useOutbox = () => {}; export const formatMoney = (m:any) => m;
+import { useState, useEffect } from "react";
+export const useOutbox = () => {
+  const [outboxCount, setOutboxCount] = useState(0);
+  return outboxCount;
+};

@@ -35,7 +35,7 @@ function entityLink(entity_type: string, entity_id: string): string | null {
 }
 
 export default function AuditLog() {
-  const { isAdmin, loading } = useAuth();
+  const { profile, isAdmin, loading } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [actors, setActors] = useState<Map<string, string>>(new Map());
   const [entity, setEntity] = useState<string>("all");
@@ -44,11 +44,12 @@ export default function AuditLog() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || !profile?.company_id) return;
     (async () => {
       const { data } = await api
         .from("audit_log")
         .select("*")
+        .eq("company_id", profile.company_id)
         .order("created_at", { ascending: false })
         .limit(500);
       const list = (data ?? []) as Row[];

@@ -41,7 +41,9 @@ const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23,59,59,999);
 
 import { formatTel, dialPhone } from "@/lib/dial";
 
+import { useAuth } from "@/hooks/useAuth";
 export default function Payments() {
+  const { profile } = useAuth();
   const { settings } = useSettings();
   const [loans, setLoans] = useState<Loan[]>([]);
   const [paymentsByLoan, setPaymentsByLoan] = useState<Record<string, Payment[]>>({});
@@ -54,9 +56,9 @@ export default function Payments() {
   async function load() {
     // Offline-first reads — fall back to local cache when there is no network.
     const [allLoans, clients, allPays] = await Promise.all([
-      loadTableOffline<any>("loans", "id, client_id, principal, total_repayable, start_date, duration_months, payment_frequency, status"),
-      loadTableOffline<any>("clients", "id, full_name, phone"),
-      loadTableOffline<any>("payments", "id, amount, paid_at, method, reference, loan_id, voided_at, created_by"),
+      loadTableOffline<any>("loans", "id, client_id, principal, total_repayable, start_date, duration_months, payment_frequency, status", profile?.company_id),
+      loadTableOffline<any>("clients", "id, full_name, phone", profile?.company_id),
+      loadTableOffline<any>("payments", "id, amount, paid_at, method, reference, loan_id, voided_at, created_by", profile?.company_id),
     ]);
     const clientById = new Map<string, any>(clients.map((c: any) => [c.id, c]));
     const list: Loan[] = allLoans
@@ -87,7 +89,11 @@ export default function Payments() {
     setRecent(rec);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (profile?.company_id) {
+      load();
+    }
+  }, [profile?.company_id]);
 
   const today = startOfDay(new Date());
   const todayEnd = endOfDay(new Date());
