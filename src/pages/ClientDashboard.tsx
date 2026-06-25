@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
-import { Banknote, TrendingUp, AlertTriangle, Wallet } from "lucide-react";
+import { Banknote, TrendingUp, AlertTriangle, Wallet, Users } from "lucide-react";
 import { formatMoney } from "@/hooks/useSettings";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { buildSchedule, allocatePayments } from "@/lib/schedule";
