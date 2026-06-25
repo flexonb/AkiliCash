@@ -31,7 +31,6 @@ const companyNavItems = [
 const clientNavItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "#loans", label: "My Loans", icon: Banknote },
-  { to: "#payments", label: "Make Payment", icon: Receipt },
   { to: "#support", label: "Support", icon: Users },
 ];
 

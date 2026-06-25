@@ -188,52 +188,6 @@ export default function ClientDashboard() {
         </Card>
       </div>
 
-      <div className="flex flex-wrap gap-3 mt-6">
-        <Dialog>
-          <DialogTrigger asChild>
-            <button id="payments" className="flex-1 min-w-[200px] bg-primary text-primary-foreground hover:bg-primary/90 p-4 rounded-xl shadow-sm text-center font-semibold transition-colors">
-              Make a Payment
-            </button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>How to Pay</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4 text-sm text-muted-foreground">
-              <p>You can make payments using Mobile Money or directly at our branch.</p>
-              <div className="bg-muted p-4 rounded-lg space-y-2">
-                <p className="font-semibold text-foreground">Mobile Money (MTN/Airtel)</p>
-                <p>1. Dial *182*8*1#</p>
-                <p>2. Enter merchant code: <strong className="text-foreground">000000</strong></p>
-                <p>3. Enter amount and your PIN to confirm.</p>
-              </div>
-              <p>Please keep the confirmation message. Your balance will update within a few minutes.</p>
-            </div>
-          </DialogContent>
-        </Dialog>
-        
-        <Dialog>
-          <DialogTrigger asChild>
-            <button id="support" className="flex-1 min-w-[200px] bg-secondary text-secondary-foreground hover:bg-secondary/80 p-4 rounded-xl shadow-sm text-center font-semibold transition-colors">
-              Need Help?
-            </button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Contact Support</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4 text-sm text-muted-foreground">
-              <p>If you are facing difficulties making a payment or have questions about your loan, please reach out to us.</p>
-              <div className="space-y-2">
-                <p><strong>Call Toll-Free:</strong> 1122</p>
-                <p><strong>Email:</strong> support@akili.rw</p>
-                <p><strong>Branch:</strong> Kigali City Center, Akili Plaza</p>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
       <div id="loans">
         <h2 className="text-xl font-bold mt-8 mb-4">Your Loans</h2>
       </div>
@@ -243,14 +197,18 @@ export default function ClientDashboard() {
           <p>No loans found linked to your National ID.</p>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {loans.map(loan => (
-            <Card key={loan.id} className="p-0 shadow-sm overflow-hidden">
+            <Card key={loan.id} className="p-0 shadow-sm overflow-hidden flex flex-col">
               <div className="p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground mb-1">{loan.companyName}</p>
+                  <div className="mb-4">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">Lending Partner</p>
+                    <h4 className="text-xl font-bold text-foreground">{loan.companyName}</h4>
+                  </div>
+                  
                   <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-bold">{loan.currencySymbol} {loan.principal.toLocaleString()}</h3>
+                    <h3 className="text-lg font-medium">{loan.currencySymbol} {loan.principal.toLocaleString()}</h3>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
                       loan.status === 'completed' ? 'bg-success/10 text-success' : 
                       loan.status === 'defaulted' ? 'bg-destructive/10 text-destructive' : 
@@ -265,30 +223,30 @@ export default function ClientDashboard() {
                   
                   {loan.status === "active" && loan.nextDueDate && loan.nextDueAmt !== undefined && (
                     <div className="mt-4 p-3 bg-primary/5 rounded-md border border-primary/10 inline-block">
-                      <p className="text-xs text-muted-foreground">Next Payment Due</p>
-                      <p className="font-semibold">{loan.currencySymbol} {loan.nextDueAmt.toLocaleString()} by {loan.nextDueDate.toLocaleDateString()}</p>
+                      <p className="text-xs text-primary font-medium mb-0.5">Next Payment Due</p>
+                      <p className="font-semibold text-lg">{loan.currencySymbol} {loan.nextDueAmt.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">by {loan.nextDueDate.toLocaleDateString()}</span></p>
                     </div>
                   )}
                 </div>
 
-                <div className="w-full sm:w-64 space-y-4">
-                  <div className="text-left sm:text-right p-4 bg-muted/30 rounded-lg">
+                <div className="w-full sm:w-72 space-y-4">
+                  <div className="text-left sm:text-right p-4 bg-muted/30 rounded-xl border border-muted">
                     <p className="text-xs text-muted-foreground mb-1">Outstanding Balance</p>
-                    <p className="font-semibold text-xl text-primary">{loan.currencySymbol} {loan.balance.toLocaleString()}</p>
+                    <p className="font-bold text-2xl text-foreground">{loan.currencySymbol} {loan.balance.toLocaleString()}</p>
                   </div>
                   
-                  <div className="space-y-1">
+                  <div className="space-y-1.5 px-1">
                     <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Repayment Progress</span>
-                      <span className="font-medium">{Math.round((loan.paid / loan.total_repayable) * 100)}%</span>
+                      <span className="text-muted-foreground font-medium">Repayment Progress</span>
+                      <span className="font-bold text-primary">{Math.round((loan.paid / loan.total_repayable) * 100)}%</span>
                     </div>
-                    <Progress value={(loan.paid / loan.total_repayable) * 100} className="h-2" />
+                    <Progress value={(loan.paid / loan.total_repayable) * 100} className="h-2 bg-muted/50" />
                   </div>
                   
                   {loan.allocations && loan.allocations.length > 0 && (
                     <Dialog>
                       <DialogTrigger asChild>
-                        <button className="text-sm text-primary hover:underline font-medium w-full text-center sm:text-right">
+                        <button className="text-sm text-primary hover:underline font-medium w-full text-center sm:text-right pt-2">
                           View Repayment Schedule
                         </button>
                       </DialogTrigger>
@@ -323,10 +281,76 @@ export default function ClientDashboard() {
                   )}
                 </div>
               </div>
+              
+              <div className="border-t bg-muted/20 p-4 flex flex-col sm:flex-row gap-3">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 py-3 px-4 rounded-lg shadow-sm text-center font-semibold transition-colors text-sm">
+                      Make a Payment
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Pay {loan.companyName}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4 text-sm text-muted-foreground">
+                      <p>You can make payments using Mobile Money or directly at the branch.</p>
+                      <div className="bg-muted p-4 rounded-lg space-y-2">
+                        <p className="font-semibold text-foreground">Mobile Money (MTN/Airtel)</p>
+                        <p>1. Dial *182*8*1#</p>
+                        <p>2. Enter merchant code: <strong className="text-foreground">000000</strong></p>
+                        <p>3. Enter amount and your PIN to confirm.</p>
+                      </div>
+                      <p>Please keep the confirmation message. Your balance will update within a few minutes.</p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="flex-1 bg-secondary text-secondary-foreground hover:bg-secondary/80 py-3 px-4 rounded-lg shadow-sm text-center font-semibold transition-colors text-sm">
+                      Need Help?
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Contact {loan.companyName}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4 text-sm text-muted-foreground">
+                      <p>If you are facing difficulties making a payment or have questions about your loan, please reach out directly.</p>
+                      <div className="space-y-2">
+                        <p><strong>Call Toll-Free:</strong> 1122</p>
+                        <p><strong>Email:</strong> support@akili.rw</p>
+                        <p><strong>Branch:</strong> Contact the local branch representative</p>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </Card>
           ))}
         </div>
       )}
+      
+      <div id="support" className="pt-8">
+        <h2 className="text-xl font-bold mb-4">General Support</h2>
+        <Card className="p-6">
+          <div className="flex flex-col sm:flex-row gap-6 items-center">
+            <div className="bg-primary/10 p-4 rounded-full text-primary">
+              <Users className="w-8 h-8" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="text-lg font-semibold mb-1">We're here to help</h3>
+              <p className="text-muted-foreground text-sm">Do you have general questions about your account or need help finding a loan? Contact our central support team.</p>
+            </div>
+            <div className="w-full sm:w-auto">
+              <a href="mailto:support@akili.rw" className="block w-full sm:w-auto bg-primary text-primary-foreground text-center px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                Contact Us
+              </a>
+            </div>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
