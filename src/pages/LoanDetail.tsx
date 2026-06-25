@@ -52,28 +52,35 @@ export default function LoanDetail() {
   const [editStartDate, setEditStartDate] = useState("");
   const [editDisbursedDate, setEditDisbursedDate] = useState("");
   const [editDatesNote, setEditDatesNote] = useState("");
+  const [pageLoading, setPageLoading] = useState(true);
 
   const load = async () => {
     if (!id || !profile?.company_id) return;
-    const [{ data: l }, { data: p }] = await Promise.all([
-      api.from("loans").select("*, clients(id, full_name, phone)").eq("id", id).eq("company_id", profile.company_id).maybeSingle(),
-      api.from("payments").select("*").eq("loan_id", id).eq("company_id", profile.company_id).is("voided_at", null).order("paid_at", { ascending: false }),
-    ]);
-    setLoan(l);
-    setPayments(p ?? []);
+    setPageLoading(true);
+    try {
+      const [{ data: l }, { data: p }] = await Promise.all([
+        api.from("loans").select("*, clients(id, full_name, phone)").eq("id", id).eq("company_id", profile.company_id).maybeSingle(),
+        api.from("payments").select("*").eq("loan_id", id).eq("company_id", profile.company_id).is("voided_at", null).order("paid_at", { ascending: false }),
+      ]);
+      setLoan(l);
+      setPayments(p ?? []);
 
-    const ids = [l?.created_by, l?.approved_by, l?.rejected_by].filter(Boolean) as string[];
-    if (ids.length) {
-      const { data: profs } = await api.from("profiles").select("id, full_name").in("id", ids);
-      const map = new Map((profs ?? []).map((x: any) => [x.id, x.full_name ?? "—"]));
-      setCreatedByName(map.get(l?.created_by) ?? "");
-      setApprovedByName(map.get(l?.approved_by ?? l?.rejected_by) ?? "");
+      const ids = [l?.created_by, l?.approved_by, l?.rejected_by].filter(Boolean) as string[];
+      if (ids.length) {
+        const { data: profs } = await api.from("profiles").select("id, full_name").in("id", ids);
+        const map = new Map((profs ?? []).map((x: any) => [x.id, x.full_name ?? "—"]));
+        setCreatedByName(map.get(l?.created_by) ?? "");
+        setApprovedByName(map.get(l?.approved_by ?? l?.rejected_by) ?? "");
+      }
+    } finally {
+      setPageLoading(false);
     }
   };
 
   useEffect(() => { load(); }, [id, profile?.company_id]);
 
-  if (!loan) return <PageSkeleton />;
+  if (pageLoading) return <PageSkeleton />;
+  if (!loan) return <div className="p-8 text-center text-muted-foreground">Loan not found.</div>;
 
   const totalPaid = payments.reduce((s, p) => s + Number(p.amount), 0);
   const balance = Math.max(0, Number(loan.total_repayable) - totalPaid);
@@ -195,7 +202,11 @@ export default function LoanDetail() {
       <Card className="p-6 space-y-3">
         <div className="flex justify-between items-start flex-wrap gap-3">
           <div>
-            <Link to={`/clients/${loan.clients?.id}`} className="text-sm text-primary hover:underline">{loan.clients?.full_name}</Link>
+            {loan.clients?.id ? (
+              <Link to={`/clients/${loan.clients.id}`} className="text-sm text-primary hover:underline">{loan.clients?.full_name}</Link>
+            ) : (
+              <span className="text-sm text-primary">{loan.clients?.full_name ?? "—"}</span>
+            )}
             <h1 className="text-2xl font-bold">{formatMoney(loan.principal, settings)}</h1>
             <p className="text-sm text-muted-foreground">{loan.interest_rate}% · {loan.duration_months} months · {loan.payment_frequency} · starts {loan.start_date}</p>
           </div>

@@ -42,7 +42,6 @@ const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23,59,59,999);
 
 import { formatTel, dialPhone } from "@/lib/dial";
 
-import { useAuth } from "@/hooks/useAuth";
 export default function Payments() {
   const { profile } = useAuth();
   const { settings } = useSettings();
@@ -211,9 +210,13 @@ export default function Payments() {
             <Card key={e.loan.id} className="p-3">
               <div className="flex justify-between items-start gap-3 flex-wrap">
                 <div className="min-w-0">
-                  <Link to={`/clients/${e.loan.clients?.id}`} className="font-medium hover:underline">
-                    {e.loan.clients?.full_name}
-                  </Link>
+                  {e.loan.clients?.id ? (
+                    <Link to={`/clients/${e.loan.clients.id}`} className="font-medium hover:underline">
+                      {e.loan.clients.full_name}
+                    </Link>
+                  ) : (
+                    <span className="font-medium">{e.loan.clients?.full_name ?? "—"}</span>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     Balance {formatMoney(e.balance, settings)}
                     {e.lastPayment && ` · Last paid ${new Date(e.lastPayment.paid_at).toLocaleDateString()}`}
