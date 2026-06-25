@@ -59,7 +59,7 @@ export default function Dashboard() {
           const { data } = await api
             .from("drawer_sessions")
             .select("id, opened_at, opening_balance, opened_by")
-            .eq("opened_by", user.id)
+            .eq("opened_by", user.uid)
             .is("closed_at", null)
             .order("opened_at", { ascending: false })
             .limit(1)
@@ -70,7 +70,7 @@ export default function Dashboard() {
       if (!active) {
         const cached = await loadTableOffline<any>("drawer_sessions", "*", profile?.company_id);
         const open = cached
-          .filter((s) => !s.closed_at && s.opened_by === user.id)
+          .filter((s) => !s.closed_at && s.opened_by === user.uid)
           .sort((a, b) => +new Date(b.opened_at) - +new Date(a.opened_at))[0];
         if (open) active = { id: open.id, opened_at: open.opened_at, opening_balance: Number(open.opening_balance) };
       }
@@ -162,7 +162,7 @@ export default function Dashboard() {
       let drawerBalance = 0;
       if (session) {
         const sinceTs = new Date(session.opened_at).getTime();
-        const ownerId = user.id;
+        const ownerId = user.uid;
         const cashInSince = pays.filter((p: any) => p.created_by === ownerId && new Date(p.paid_at).getTime() >= sinceTs).reduce((s: number, p: any) => s + Number(p.amount), 0);
         const cashOutSince = loansAll.filter((l: any) => {
           if (!isDisbursed(l)) return false;

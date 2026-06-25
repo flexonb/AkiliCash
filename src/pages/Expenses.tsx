@@ -129,7 +129,7 @@ export default function Expenses() {
       id: newId,
       company_id: profile?.company_id,
       category: values.category, amount: values.amount, spent_at: values.spent_at,
-      note: values.note || null, created_by: user?.id,
+      note: values.note || null, created_by: user?.uid,
     });
     setLoading(false);
     if (error) return toast.error((error as any).message ?? String(error));
@@ -146,7 +146,7 @@ export default function Expenses() {
     const { data: { user } } = await api.auth.getUser();
     const { data, error } = await api.from("expenses").update({
       voided_at: new Date().toISOString(),
-      voided_by: user?.id,
+      voided_by: user?.uid,
       void_reason: voidReason.trim(),
     }).eq("id", voidTarget.id).is("voided_at", null).select("id");
     if (error) return toast.error(error.message);
@@ -186,7 +186,7 @@ export default function Expenses() {
     const { data: { user } } = await api.auth.getUser();
     // Void original
     const { error: vErr } = await api.from("expenses").update({
-      voided_at: new Date().toISOString(), voided_by: user?.id, void_reason: editReason.trim(),
+      voided_at: new Date().toISOString(), voided_by: user?.uid, void_reason: editReason.trim(),
     }).eq("id", editTarget.id);
     if (vErr) return toast.error(vErr.message);
     await logAudit({ entity_type: "expense", entity_id: editTarget.id, action: "void", note: editReason.trim(), before: editTarget });
@@ -194,7 +194,7 @@ export default function Expenses() {
     const { data: insertedList, error: iErr } = await api.from("expenses").insert({
       company_id: profile?.company_id,
       category: values.category, amount: values.amount, spent_at: values.spent_at,
-      note: values.note || null, created_by: user?.id, replaces_id: editTarget.id,
+      note: values.note || null, created_by: user?.uid, replaces_id: editTarget.id,
     });
     if (iErr) return toast.error(iErr.message);
     
@@ -227,7 +227,7 @@ export default function Expenses() {
       day_of_month: values.frequency === "monthly" ? values.day_of_month ?? 1 : null,
       day_of_week: values.frequency === "weekly" ? values.day_of_week ?? 0 : null,
       note: values.note || null,
-      created_by: user?.id,
+      created_by: user?.uid,
     });
     setRecLoading(false);
     if (error) return toast.error(error.message);
@@ -243,7 +243,7 @@ export default function Expenses() {
     const { error } = await api.from("expenses").insert({
       company_id: profile?.company_id,
       category: t.category, amount: t.amount, spent_at: today,
-      note: t.note ? `${t.note} (recurring)` : "Recurring", created_by: user?.id,
+      note: t.note ? `${t.note} (recurring)` : "Recurring", created_by: user?.uid,
     });
     if (error) return toast.error(error.message);
     await api.from("recurring_expenses").update({ last_posted_on: today }).eq("id", t.id);

@@ -55,7 +55,7 @@ export const LoanForm = ({ open, onOpenChange, pickClient, clientId, onCreated }
         total_repayable: totalRepayable,
         status: "pending",
         start_date: new Date().toISOString().slice(0, 10),
-        created_by: user.id
+        created_by: user.uid
       });
 
       if (error) throw error;

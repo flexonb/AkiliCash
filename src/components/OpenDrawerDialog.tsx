@@ -20,8 +20,8 @@ export const OpenDrawerDialog = ({ open, onOpenChange, onOpened }: any) => {
     setLoading(true);
     try {
       const { error } = await api.from("drawer_sessions").insert({
-        opened_by: user.id,
-        created_by: user.id,
+        opened_by: user.uid,
+        created_by: user.uid,
         company_id: profile.company_id,
         opening_balance: Number(openingBalance) || 0,
         opened_at: new Date().toISOString()

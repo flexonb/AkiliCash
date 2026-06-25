@@ -38,7 +38,7 @@ export const PaymentForm = ({ open, onOpenChange, loanId, loanOptions, maxAmount
         payment_method: method,
         reference_number: reference,
         notes,
-        created_by: user.id,
+        created_by: user.uid,
         paid_at: new Date().toISOString()
       });
 

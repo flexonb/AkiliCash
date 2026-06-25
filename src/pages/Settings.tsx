@@ -91,7 +91,7 @@ export default function Settings() {
   }
 
   async function removeAccess(row: TeamRow) {
-    if (row.user_id === user?.id) return toast.error("You cannot remove yourself.");
+    if (row.user_id === user?.uid) return toast.error("You cannot remove yourself.");
     const { error } = await api.from("user_roles").delete().eq("user_id", row.user_id);
     if (error) return toast.error(error.message);
     toast.success("Access revoked");
@@ -170,7 +170,7 @@ export default function Settings() {
             <div key={r.user_id} className="flex items-center justify-between border-b last:border-0 pb-2 gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{r.full_name ?? r.user_id.slice(0, 8)}</p>
-                {r.user_id === user?.id && <p className="text-[10px] text-muted-foreground">You</p>}
+                {r.user_id === user?.uid && <p className="text-[10px] text-muted-foreground">You</p>}
               </div>
               {isAdmin ? (
                 <>
@@ -187,7 +187,7 @@ export default function Settings() {
                     size="sm"
                     variant="ghost"
                     className="h-8 px-2 text-destructive"
-                    disabled={r.user_id === user?.id}
+                    disabled={r.user_id === user?.uid}
                     onClick={() => removeAccess(r)}
                     aria-label="Revoke access"
                   >

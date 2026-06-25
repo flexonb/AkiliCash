@@ -32,7 +32,7 @@ export const ClientForm = ({ open, onOpenChange, onCreated }: any) => {
         dob: dob,
         address: address.trim(),
         status: "active",
-        created_by: user.id
+        created_by: user.uid
       });
 
       if (error) throw error;
