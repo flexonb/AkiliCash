@@ -16,10 +16,48 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState<"company" | "client" | null>(null);
 
-  // Form states
+  // Form states - Company
   const [companyName, setCompanyName] = useState("");
-  const [nationalId, setNationalId] = useState("");
+  const [companyTin, setCompanyTin] = useState("");
+  const [companyPhone, setCompanyPhone] = useState("");
+  const [companyEmail, setCompanyEmail] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+
+  // Form states - Client
   const [fullName, setFullName] = useState("");
+  const [nationalId, setNationalId] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientDob, setClientDob] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+
+  const validateCompany = () => {
+    if (!companyName.trim()) throw new Error("Company name is required.");
+    if (!companyTin.trim() || !/^\d{9}$/.test(companyTin.trim())) {
+      throw new Error("TIN Number must be exactly 9 digits.");
+    }
+    if (!companyPhone.trim() || companyPhone.length < 10) {
+      throw new Error("Please provide a valid company phone number.");
+    }
+    if (!companyAddress.trim()) throw new Error("Company address is required.");
+  };
+
+  const validateClient = () => {
+    if (!fullName.trim()) throw new Error("Full Legal Name is required.");
+    if (!nationalId.trim() || !/^\d{16}$/.test(nationalId.trim())) {
+      throw new Error("National ID must be exactly 16 digits.");
+    }
+    if (!clientPhone.trim() || clientPhone.length < 10) {
+      throw new Error("Please provide a valid phone number.");
+    }
+    if (!clientDob.trim()) {
+      throw new Error("Date of birth is required.");
+    }
+    // Basic 18+ check
+    const age = (new Date().getTime() - new Date(clientDob).getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+    if (age < 18) {
+      throw new Error("You must be at least 18 years old.");
+    }
+  };
 
   async function handleComplete() {
     if (!user) return;
@@ -27,10 +65,14 @@ export default function Onboarding() {
 
     try {
       if (type === "company") {
-        if (!companyName) throw new Error("Company name required");
+        validateCompany();
         // Create company
         const { data: compData, error: compErr } = await api.from("companies").insert({
-          name: companyName,
+          name: companyName.trim(),
+          tin: companyTin.trim(),
+          phone: companyPhone.trim(),
+          email: companyEmail.trim() || user.email || null,
+          address: companyAddress.trim(),
           currency_code: "RWF",
           currency_symbol: "FRW"
         });
@@ -47,23 +89,27 @@ export default function Onboarding() {
             full_name: user.displayName || user.email?.split("@")[0] || "Admin",
             user_type: "company_admin",
             company_id: companyId,
+            phone: companyPhone.trim(),
           }),
           api.from("settings").insert({
             id: companyId,
-            business_name: companyName,
+            business_name: companyName.trim(),
             currency_code: "RWF",
             currency_symbol: "FRW"
           })
         ]);
 
       } else {
-        if (!nationalId || !fullName) throw new Error("Full name and National ID required");
+        validateClient();
         // Create profile for client
         const { error: profErr } = await api.from("profiles").insert({
           id: user.uid || user.id,
-          full_name: fullName,
+          full_name: fullName.trim(),
           user_type: "client",
-          national_id: nationalId
+          national_id: nationalId.trim(),
+          phone: clientPhone.trim(),
+          dob: clientDob,
+          address: clientAddress.trim() || null
         });
         if (profErr) throw profErr;
       }
@@ -99,7 +145,7 @@ export default function Onboarding() {
         }}
         className="w-full max-w-xl z-10"
       >
-        <Card className="p-8 shadow-elegant border-muted/50 bg-card/80 backdrop-blur-xl">
+        <Card className="p-8 shadow-elegant border-muted/50 bg-card/80 backdrop-blur-xl max-h-[90vh] overflow-y-auto custom-scrollbar">
           <div className="flex flex-col items-center text-center mb-8">
             <img src="/app-icon.png" alt="AkiliCash" className="w-16 h-16 rounded-2xl object-cover mb-4 shadow-sm" />
             <h1 className="text-3xl font-bold tracking-tight">Welcome to AkiliCash</h1>
@@ -144,24 +190,64 @@ export default function Onboarding() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="space-y-6"
+                className="space-y-5"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="companyName" className="text-base">What is your company called?</Label>
+                  <Label htmlFor="companyName">Company Name <span className="text-destructive">*</span></Label>
                   <Input 
                     id="companyName"
                     value={companyName} 
                     onChange={e => setCompanyName(e.target.value)} 
                     placeholder="e.g. Akili Capital" 
-                    className="h-12 text-lg px-4"
-                    autoFocus
                   />
                 </div>
-                <div className="flex gap-3 pt-2">
+                <div className="space-y-2">
+                  <Label htmlFor="companyTin">TIN Number <span className="text-destructive">*</span></Label>
+                  <Input 
+                    id="companyTin"
+                    value={companyTin} 
+                    onChange={e => setCompanyTin(e.target.value)} 
+                    placeholder="e.g. 10xxxxxxx" 
+                    className="font-mono"
+                    maxLength={9}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="companyPhone">Phone Number <span className="text-destructive">*</span></Label>
+                    <Input 
+                      id="companyPhone"
+                      value={companyPhone} 
+                      onChange={e => setCompanyPhone(e.target.value)} 
+                      placeholder="+250..." 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyEmail">Email Address</Label>
+                    <Input 
+                      id="companyEmail"
+                      type="email"
+                      value={companyEmail} 
+                      onChange={e => setCompanyEmail(e.target.value)} 
+                      placeholder="contact@company.com" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="companyAddress">Physical Address <span className="text-destructive">*</span></Label>
+                  <Input 
+                    id="companyAddress"
+                    value={companyAddress} 
+                    onChange={e => setCompanyAddress(e.target.value)} 
+                    placeholder="Kigali, Rwanda" 
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
                   <Button variant="outline" size="lg" onClick={() => setType(null)} className="shrink-0" disabled={loading}>
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button size="lg" onClick={handleComplete} disabled={loading || !companyName} className="flex-1">
+                  <Button size="lg" onClick={handleComplete} disabled={loading} className="flex-1">
                     {loading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : "Complete Setup"}
                     {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
                   </Button>
@@ -174,39 +260,63 @@ export default function Onboarding() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="space-y-6"
+                className="space-y-5"
               >
-                <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Legal Name <span className="text-destructive">*</span></Label>
+                  <Input 
+                    id="fullName"
+                    value={fullName} 
+                    onChange={e => setFullName(e.target.value)} 
+                    placeholder="e.g. John Doe" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nationalId">National ID <span className="text-destructive">*</span></Label>
+                  <Input 
+                    id="nationalId"
+                    value={nationalId} 
+                    onChange={e => setNationalId(e.target.value)} 
+                    placeholder="e.g. 119..." 
+                    className="font-mono"
+                    maxLength={16}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Legal Name</Label>
+                    <Label htmlFor="clientPhone">Phone Number <span className="text-destructive">*</span></Label>
                     <Input 
-                      id="fullName"
-                      value={fullName} 
-                      onChange={e => setFullName(e.target.value)} 
-                      placeholder="e.g. John Doe" 
-                      className="h-12"
-                      autoFocus
+                      id="clientPhone"
+                      value={clientPhone} 
+                      onChange={e => setClientPhone(e.target.value)} 
+                      placeholder="+250..." 
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="nationalId">National ID</Label>
+                    <Label htmlFor="clientDob">Date of Birth <span className="text-destructive">*</span></Label>
                     <Input 
-                      id="nationalId"
-                      value={nationalId} 
-                      onChange={e => setNationalId(e.target.value)} 
-                      placeholder="e.g. 119..." 
-                      className="h-12 font-mono"
+                      id="clientDob"
+                      type="date"
+                      value={clientDob} 
+                      onChange={e => setClientDob(e.target.value)} 
                     />
-                    <p className="text-xs text-muted-foreground pt-1">
-                      Your National ID securely links your credit history across the platform.
-                    </p>
                   </div>
                 </div>
-                <div className="flex gap-3 pt-2">
+                <div className="space-y-2">
+                  <Label htmlFor="clientAddress">Physical Address</Label>
+                  <Input 
+                    id="clientAddress"
+                    value={clientAddress} 
+                    onChange={e => setClientAddress(e.target.value)} 
+                    placeholder="Kigali, Rwanda" 
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
                   <Button variant="outline" size="lg" onClick={() => setType(null)} className="shrink-0" disabled={loading}>
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button size="lg" onClick={handleComplete} disabled={loading || !fullName || !nationalId} className="flex-1">
+                  <Button size="lg" onClick={handleComplete} disabled={loading} className="flex-1">
                     {loading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : "Complete Setup"}
                     {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
                   </Button>
@@ -219,3 +329,4 @@ export default function Onboarding() {
     </div>
   );
 }
+
