@@ -78,6 +78,7 @@ export default function Clients() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold truncate">{c.full_name}</p>
+                      {c.national_id && <Badge variant="outline" className="text-xs font-mono">{c.national_id}</Badge>}
                       {dormant && <Badge variant="secondary">Dormant</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground truncate">{c.phone}{c.address ? ` · ${c.address}` : ""}</p>

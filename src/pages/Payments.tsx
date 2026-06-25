@@ -41,6 +41,7 @@ const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); re
 const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23,59,59,999); return x; };
 
 import { formatTel, dialPhone } from "@/lib/dial";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Payments() {
   const { profile } = useAuth();

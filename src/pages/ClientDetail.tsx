@@ -130,6 +130,7 @@ export default function ClientDetail() {
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold">{client.full_name}</h1>
+              {client.national_id && <Badge variant="outline" className="font-mono text-sm">{client.national_id}</Badge>}
               <Badge variant={isDormant ? "secondary" : "default"}>{isDormant ? "Dormant" : "Active"}</Badge>
             </div>
             <div className="flex items-center gap-2 flex-wrap text-muted-foreground">

@@ -5,6 +5,9 @@ import { Card } from "@/components/ui/AppCard";
 import { Banknote, TrendingUp, AlertTriangle, Wallet } from "lucide-react";
 import { formatMoney } from "@/hooks/useSettings";
 import { PageSkeleton } from "@/components/PageSkeleton";
+import { buildSchedule, allocatePayments } from "@/lib/schedule";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 
 interface UnifiedLoan {
   id: string;
@@ -15,9 +18,13 @@ interface UnifiedLoan {
   status: string;
   start_date: string;
   duration_months: number;
+  payment_frequency: string;
   paid: number;
   balance: number;
   currencySymbol: string;
+  allocations?: any[];
+  nextDueAmt?: number;
+  nextDueDate?: Date;
 }
 
 export default function ClientDashboard() {
@@ -62,6 +69,17 @@ export default function ClientDashboard() {
       const unified: UnifiedLoan[] = allLoans.map((l: any) => {
         const loanPays = validPays.filter((p: any) => p.loan_id === l.id);
         const paid = loanPays.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+        
+        const sched = buildSchedule({
+          startDate: l.start_date,
+          durationMonths: l.duration_months,
+          frequency: l.payment_frequency,
+          totalRepayable: Number(l.total_repayable),
+        });
+        const { allocations } = allocatePayments(sched.items, loanPays);
+        const pending = allocations.filter(a => a.status === "pending" || a.status === "partial" || a.status === "missed");
+        const nextDue = pending[0];
+        
         return {
           id: l.id,
           companyName: "Lending Partner", // Placeholder for company name
@@ -71,9 +89,13 @@ export default function ClientDashboard() {
           status: l.status,
           start_date: l.start_date,
           duration_months: l.duration_months,
+          payment_frequency: l.payment_frequency,
           paid,
           balance: Math.max(0, Number(l.total_repayable) - paid),
-          currencySymbol: "FRW" // Default
+          currencySymbol: "FRW", // Default
+          allocations,
+          nextDueAmt: nextDue ? nextDue.amount : undefined,
+          nextDueDate: nextDue ? nextDue.due : undefined,
         };
       });
 
@@ -160,6 +182,52 @@ export default function ClientDashboard() {
         </Card>
       </div>
 
+      <div className="flex flex-wrap gap-3 mt-6">
+        <Dialog>
+          <DialogTrigger asChild>
+            <button className="flex-1 min-w-[200px] bg-primary text-primary-foreground hover:bg-primary/90 p-4 rounded-xl shadow-sm text-center font-semibold transition-colors">
+              Make a Payment
+            </button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>How to Pay</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4 text-sm text-muted-foreground">
+              <p>You can make payments using Mobile Money or directly at our branch.</p>
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <p className="font-semibold text-foreground">Mobile Money (MTN/Airtel)</p>
+                <p>1. Dial *182*8*1#</p>
+                <p>2. Enter merchant code: <strong className="text-foreground">000000</strong></p>
+                <p>3. Enter amount and your PIN to confirm.</p>
+              </div>
+              <p>Please keep the confirmation message. Your balance will update within a few minutes.</p>
+            </div>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <button className="flex-1 min-w-[200px] bg-secondary text-secondary-foreground hover:bg-secondary/80 p-4 rounded-xl shadow-sm text-center font-semibold transition-colors">
+              Need Help?
+            </button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Contact Support</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4 text-sm text-muted-foreground">
+              <p>If you are facing difficulties making a payment or have questions about your loan, please reach out to us.</p>
+              <div className="space-y-2">
+                <p><strong>Call Toll-Free:</strong> 1122</p>
+                <p><strong>Email:</strong> support@akili.rw</p>
+                <p><strong>Branch:</strong> Kigali City Center, Akili Plaza</p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
       <h2 className="text-xl font-bold mt-8 mb-4">Your Loans</h2>
       {loans.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground border-dashed">
@@ -169,28 +237,83 @@ export default function ClientDashboard() {
       ) : (
         <div className="space-y-4">
           {loans.map(loan => (
-            <Card key={loan.id} className="p-6 shadow-sm flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">{loan.companyName}</p>
-                <div className="flex items-center gap-3">
-                  <h3 className="text-lg font-bold">{loan.currencySymbol} {loan.principal.toLocaleString()}</h3>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    loan.status === 'completed' ? 'bg-success/10 text-success' : 
-                    loan.status === 'defaulted' ? 'bg-destructive/10 text-destructive' : 
-                    'bg-primary/10 text-primary'
-                  }`}>
-                    {loan.status}
-                  </span>
+            <Card key={loan.id} className="p-0 shadow-sm overflow-hidden">
+              <div className="p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground mb-1">{loan.companyName}</p>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-bold">{loan.currencySymbol} {loan.principal.toLocaleString()}</h3>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      loan.status === 'completed' ? 'bg-success/10 text-success' : 
+                      loan.status === 'defaulted' ? 'bg-destructive/10 text-destructive' : 
+                      'bg-primary/10 text-primary'
+                    }`}>
+                      {loan.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Started {new Date(loan.start_date).toLocaleDateString()} · {loan.duration_months} months
+                  </p>
+                  
+                  {loan.status === "active" && loan.nextDueDate && loan.nextDueAmt !== undefined && (
+                    <div className="mt-4 p-3 bg-primary/5 rounded-md border border-primary/10 inline-block">
+                      <p className="text-xs text-muted-foreground">Next Payment Due</p>
+                      <p className="font-semibold">{loan.currencySymbol} {loan.nextDueAmt.toLocaleString()} by {loan.nextDueDate.toLocaleDateString()}</p>
+                    </div>
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Started {new Date(loan.start_date).toLocaleDateString()} · {loan.duration_months} months
-                </p>
-              </div>
 
-              <div className="text-left sm:text-right w-full sm:w-auto p-4 bg-muted/30 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Outstanding Balance</p>
-                <p className="font-semibold text-lg">{loan.currencySymbol} {loan.balance.toLocaleString()}</p>
-                {loan.paid > 0 && <p className="text-xs text-success mt-1">Paid {loan.currencySymbol} {loan.paid.toLocaleString()}</p>}
+                <div className="w-full sm:w-64 space-y-4">
+                  <div className="text-left sm:text-right p-4 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Outstanding Balance</p>
+                    <p className="font-semibold text-xl text-primary">{loan.currencySymbol} {loan.balance.toLocaleString()}</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Repayment Progress</span>
+                      <span className="font-medium">{Math.round((loan.paid / loan.total_repayable) * 100)}%</span>
+                    </div>
+                    <Progress value={(loan.paid / loan.total_repayable) * 100} className="h-2" />
+                  </div>
+                  
+                  {loan.allocations && loan.allocations.length > 0 && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button className="text-sm text-primary hover:underline font-medium w-full text-center sm:text-right">
+                          View Repayment Schedule
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Repayment Schedule</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-3 mt-4">
+                          {loan.allocations.map((a, i) => (
+                            <div key={i} className="flex justify-between items-center p-3 border rounded-lg">
+                              <div>
+                                <p className="font-medium">#{a.index}</p>
+                                <p className="text-xs text-muted-foreground">{a.due.toLocaleDateString()}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold">{loan.currencySymbol} {a.amount.toLocaleString()}</p>
+                                <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                  a.status === 'paid' ? 'bg-success/10 text-success' :
+                                  a.status === 'paid_late' ? 'bg-success/10 text-success' :
+                                  a.status === 'partial' ? 'bg-yellow-500/10 text-yellow-600' :
+                                  a.status === 'missed' ? 'bg-destructive/10 text-destructive' :
+                                  'bg-muted text-muted-foreground'
+                                }`}>
+                                  {a.status.replace("_", " ")}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
               </div>
             </Card>
           ))}
