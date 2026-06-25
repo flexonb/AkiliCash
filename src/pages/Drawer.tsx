@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useSettings, formatMoney } from "@/hooks/useSettings";
 import { Download, ChevronDown, ChevronRight } from "lucide-react";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { generateDailyReport } from "@/lib/dailyReport";
 import { toast } from "sonner";
 
@@ -148,7 +149,7 @@ export default function Drawer() {
     }
   }
 
-  if (authLoading) return null;
+  if (authLoading) return <PageSkeleton />;
   if (!isAdmin) return <Navigate to="/loans" replace />;
 
   return (

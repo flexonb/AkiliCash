@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { buildSchedule, allocatePayments } from "@/lib/schedule";
 import { useConfirmSave } from "@/components/ConfirmSave";
 import { logAudit } from "@/lib/audit";
+import { PageSkeleton } from "@/components/PageSkeleton";
 
 const statusVariant = (s: string): "default" | "secondary" | "destructive" | "outline" => {
   if (s === "completed") return "secondary";
@@ -70,9 +71,9 @@ export default function LoanDetail() {
     }
   };
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { load(); }, [id, profile?.company_id]);
 
-  if (!loan) return <p>Loading…</p>;
+  if (!loan) return <PageSkeleton />;
 
   const totalPaid = payments.reduce((s, p) => s + Number(p.amount), 0);
   const balance = Math.max(0, Number(loan.total_repayable) - totalPaid);

@@ -22,6 +22,7 @@ import { LoanForm } from "@/components/LoanForm";
 import { ClientForm } from "@/components/ClientForm";
 import { toast } from "sonner";
 import { CallButton } from "@/components/CallButton";
+import { PageSkeleton } from "@/components/PageSkeleton";
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
@@ -76,9 +77,9 @@ export default function ClientDetail() {
     } else setPassportPhotoUrl(null);
   };
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { load(); }, [id, profile?.company_id]);
 
-  if (!client) return <p>Loading…</p>;
+  if (!client) return <PageSkeleton />;
 
   const isDormant = client.status === "dormant";
 

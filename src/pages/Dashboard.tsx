@@ -12,6 +12,7 @@ import { Link, Navigate } from "react-router-dom";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { CashFlowChart } from "@/components/dashboard/charts/CashFlowChart";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { LoanStatusChart } from "@/components/dashboard/charts/LoanStatusChart";
 import { RepaymentChart } from "@/components/dashboard/charts/RepaymentChart";
 import { ProfitChart } from "@/components/dashboard/charts/ProfitChart";
@@ -229,7 +230,7 @@ export default function Dashboard() {
     { label: "Total clients", value: stats.clients, icon: Users, link: "/clients" },
   ], [stats, settings, session]);
 
-  if (authLoading) return null;
+  if (authLoading) return <PageSkeleton />;
   if (!user) return <Navigate to="/auth" replace />;
 
   const sessionFromPriorDay = session && new Date(session.opened_at).toDateString() !== new Date().toDateString();

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { PageSkeleton } from "@/components/PageSkeleton";
 
 type Row = {
   id: string;
@@ -79,7 +80,7 @@ export default function AuditLog() {
     });
   }, [rows, entity, action, q]);
 
-  if (loading) return <p>Loading…</p>;
+  if (loading) return <PageSkeleton />;
   if (!isAdmin) {
     return (
       <Card className="p-8 text-center">

@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
 import { Banknote, TrendingUp, AlertTriangle, Wallet } from "lucide-react";
 import { formatMoney } from "@/hooks/useSettings";
+import { PageSkeleton } from "@/components/PageSkeleton";
 
 interface UnifiedLoan {
   id: string;
@@ -91,7 +92,7 @@ export default function ClientDashboard() {
     }
   }
 
-  if (loading) return <div className="p-6 text-muted-foreground animate-pulse">Loading your unified credit profile...</div>;
+  if (loading) return <PageSkeleton />;
 
   const activeLoans = loans.filter(l => l.status === "active" || l.status === "approved");
   const totalBalance = activeLoans.reduce((sum, l) => sum + l.balance, 0);
