@@ -26,8 +26,9 @@ export default function Clients() {
     if (!profile?.company_id) return;
     setLoading(true);
     try {
-      const { data } = await api.from("clients").select("*").eq("company_id", profile.company_id).order("full_name", { ascending: true });
-      setClients((data ?? []) as Client[]);
+      const { data } = await api.from("clients").select("*").eq("company_id", profile.company_id);
+      const sorted = (data ?? []).sort((a: any, b: any) => (a.full_name || "").localeCompare(b.full_name || ""));
+      setClients(sorted as Client[]);
     } finally {
       setLoading(false);
     }

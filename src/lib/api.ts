@@ -1,5 +1,5 @@
 import { db, auth as fbAuth, storage as fbStorage, functions as fbFunctions } from "@/lib/firebase";
-import { collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where, orderBy, limit as fLimit, writeBatch } from "firebase/firestore";
+import { collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where, orderBy, limit as fLimit, writeBatch, documentId } from "firebase/firestore";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut as fbSignOut, onAuthStateChanged, User } from "firebase/auth";
 import { ref, getDownloadURL } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
@@ -49,23 +49,53 @@ class ApiQueryBuilder {
         return resolve({ data: null, error: null });
       }
 
-      if (this._eq.id !== undefined && Object.keys(this._eq).length === 1 && Object.keys(this._in).length === 0 && Object.keys(this._is).length === 0) {
+      if (this._eq.id !== undefined) {
         const d = await getDoc(doc(db, this.table, String(this._eq.id)));
         if (!d.exists()) {
           return resolve({ data: this._maybeSingle ? null : (this._single ? null : []), error: null });
         }
-        const data = { id: d.id, ...d.data() };
-        return resolve({ data: this._maybeSingle ? data : (this._single ? data : [data]), error: null });
+        const data: any = { id: d.id, ...d.data() };
+        
+        let match = true;
+        for (const [col, val] of Object.entries(this._eq)) {
+          if (col !== "id" && data[col] !== val) match = false;
+        }
+        for (const [col, val] of Object.entries(this._is)) {
+          if (val === null && data[col] !== null && data[col] !== undefined) match = false;
+          if (val !== null && data[col] !== val) match = false;
+        }
+        // ignoring _in for ID fast path since we usually don't mix id eq with other IN queries
+        
+        if (match) {
+          // fetch relations if requested
+          if (this._select.includes('clients(')) {
+             if (data.client_id) {
+                const cDoc = await getDoc(doc(db, "clients", String(data.client_id)));
+                if (cDoc.exists()) data.clients = { id: cDoc.id, ...cDoc.data() };
+             }
+          }
+          return resolve({ data: this._maybeSingle ? data : (this._single ? data : [data]), error: null });
+        } else {
+          return resolve({ data: this._maybeSingle ? null : (this._single ? null : []), error: null });
+        }
       }
 
       const q: any = collection(db, this.table);
       const conditions: any[] = [];
       for (const [col, val] of Object.entries(this._eq)) {
-        conditions.push(where(col, "==", val));
+        if (col === "id") {
+          conditions.push(where(documentId(), "==", String(val)));
+        } else {
+          conditions.push(where(col, "==", val));
+        }
       }
       for (const [col, vals] of Object.entries(this._in)) {
         if (vals && vals.length > 0) {
-          conditions.push(where(col, "in", vals.slice(0, 30)));
+          if (col === "id") {
+            conditions.push(where(documentId(), "in", vals.map(String).slice(0, 30)));
+          } else {
+            conditions.push(where(col, "in", vals.slice(0, 30)));
+          }
         } else if (vals && vals.length === 0) {
           return resolve({ data: this._maybeSingle ? null : (this._single ? null : []), error: null });
         }

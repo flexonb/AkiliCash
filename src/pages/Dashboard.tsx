@@ -62,11 +62,12 @@ export default function Dashboard() {
             .from("drawer_sessions")
             .select("id, opened_at, opening_balance, opened_by")
             .eq("opened_by", user.uid)
-            .is("closed_at", null)
-            .order("opened_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (data) active = { id: data.id, opened_at: data.opened_at, opening_balance: Number(data.opening_balance) };
+            .is("closed_at", null);
+          if (data && Array.isArray(data) && data.length > 0) {
+             const sorted = data.sort((a: any, b: any) => +new Date(b.opened_at) - +new Date(a.opened_at));
+             const first = sorted[0];
+             active = { id: first.id, opened_at: first.opened_at, opening_balance: Number(first.opening_balance) };
+          }
         } catch { /* offline fallback below */ }
       }
       if (!active) {

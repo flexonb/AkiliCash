@@ -22,11 +22,13 @@ export default function Drawer() {
     if (!isAdmin || !profile?.company_id) return;
     (async () => {
       const [{ data: cls }, { data: ses }] = await Promise.all([
-        api.from("drawer_closures").select("*").eq("company_id", profile.company_id).order("close_date", { ascending: false }),
-        api.from("drawer_sessions").select("*").eq("company_id", profile.company_id).order("opened_at", { ascending: false }),
+        api.from("drawer_closures").select("*").eq("company_id", profile.company_id),
+        api.from("drawer_sessions").select("*").eq("company_id", profile.company_id),
       ]);
-      setClosures(cls ?? []);
-      setSessions(ses ?? []);
+      const sortedClosures = (cls ?? []).sort((a: any, b: any) => +new Date(b.close_date) - +new Date(a.close_date));
+      const sortedSessions = (ses ?? []).sort((a: any, b: any) => +new Date(b.opened_at) - +new Date(a.opened_at));
+      setClosures(sortedClosures);
+      setSessions(sortedSessions);
       const ids = Array.from(new Set([
         ...((cls ?? []).map((c: any) => c.closed_by).filter(Boolean)),
         ...((ses ?? []).map((s: any) => s.opened_by).filter(Boolean)),

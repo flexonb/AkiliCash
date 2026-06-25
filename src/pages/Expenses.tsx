@@ -113,10 +113,11 @@ export default function Expenses() {
     setPageLoading(true);
     try {
       const [{ data: e }, { data: r }] = await Promise.all([
-        api.from("expenses").select("*").eq("company_id", profile.company_id).is("voided_at", null).order("spent_at", { ascending: false }).limit(500),
+        api.from("expenses").select("*").eq("company_id", profile.company_id).is("voided_at", null),
         api.from("recurring_expenses").select("*").eq("company_id", profile.company_id),
       ]);
-      setRows(e ?? []);
+      const sortedExpenses = (e ?? []).sort((a: any, b: any) => +new Date(b.spent_at) - +new Date(a.spent_at));
+      setRows(sortedExpenses.slice(0, 500));
       
       // Sort locally to handle missing created_at
       const sortedRecurring = (r ?? []).sort((a: any, b: any) => {

@@ -60,10 +60,11 @@ export default function LoanDetail() {
     try {
       const [{ data: l }, { data: p }] = await Promise.all([
         api.from("loans").select("*, clients(id, full_name, phone)").eq("id", id).eq("company_id", profile.company_id).maybeSingle(),
-        api.from("payments").select("*").eq("loan_id", id).eq("company_id", profile.company_id).is("voided_at", null).order("paid_at", { ascending: false }),
+        api.from("payments").select("*").eq("loan_id", id).eq("company_id", profile.company_id).is("voided_at", null),
       ]);
       setLoan(l);
-      setPayments(p ?? []);
+      const sortedPayments = (p ?? []).sort((a: any, b: any) => +new Date(b.paid_at) - +new Date(a.paid_at));
+      setPayments(sortedPayments);
 
       const ids = [l?.created_by, l?.approved_by, l?.rejected_by].filter(Boolean) as string[];
       if (ids.length) {
