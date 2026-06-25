@@ -30,8 +30,8 @@ const companyNavItems = [
 
 const clientNavItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "#loans", label: "My Loans", icon: Banknote },
-  { to: "#support", label: "Support", icon: Users },
+  { to: "/my-loans", label: "My Loans", icon: Banknote },
+  { to: "/support", label: "Support", icon: Users },
 ];
 
 function getInitials(name: string | null | undefined, fallback: string | null | undefined): string {
@@ -125,48 +125,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => {
-            const isHash = item.to.startsWith("#");
-            const className = ({ isActive }: any) =>
-              cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
-                !isHash && isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              );
-
-            if (isHash) {
-              return (
-                <a
-                  key={item.to}
-                  href={item.to}
-                  onClick={(e) => {
-                    const el = document.querySelector(item.to);
-                    if (el) {
-                      e.preventDefault();
-                      el.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                  className={className({ isActive: false })}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
-                </a>
-              );
-            }
-
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={className}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.label}
-              </NavLink>
-            );
-          })}
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                )
+              }
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
         <div className="p-4 border-t border-sidebar-border">
           <div className="text-xs opacity-70 px-2 truncate">

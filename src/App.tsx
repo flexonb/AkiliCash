@@ -9,6 +9,8 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
+import ClientLoans from "./pages/ClientLoans";
+import ClientSupport from "./pages/ClientSupport";
 import Loans from "./pages/Loans";
 import LoanDetail from "./pages/LoanDetail";
 import Payments from "./pages/Payments";
@@ -43,6 +45,8 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/clients" element={wrap(<Clients />)} />
               <Route path="/clients/:id" element={wrap(<ClientDetail />)} />
+              <Route path="/my-loans" element={wrap(<ClientLoans />)} />
+              <Route path="/support" element={wrap(<ClientSupport />)} />
               <Route path="/loans" element={wrap(<Loans />)} />
               <Route path="/loans/:id" element={wrap(<LoanDetail />)} />
               <Route path="/payments" element={wrap(<Payments />)} />
