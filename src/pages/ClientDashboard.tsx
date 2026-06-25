@@ -160,35 +160,48 @@ export default function ClientDashboard() {
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4">
-        <Card className="p-6 shadow-elegant flex flex-col justify-center border-t-4 border-t-primary">
-          <p className="text-sm text-muted-foreground">AkiliScore</p>
-          <div className="flex items-end gap-2 mt-2">
-            <h2 className="text-4xl font-black">{loans.length > 0 ? score : "---"}</h2>
-            <span className={`font-semibold mb-1 ${scoreColor}`}>{scoreText}</span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">Based on your National ID history.</p>
-        </Card>
+        <Link to="/support" className="h-full">
+          <Card className="p-6 shadow-elegant h-full hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-primary">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 h-full">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-muted-foreground">AkiliScore</p>
+                <div className="flex items-end gap-2 mt-2">
+                  <h2 className="text-3xl font-bold">{loans.length > 0 ? score : "---"}</h2>
+                  <span className={`font-semibold text-sm mb-1 ${scoreColor}`}>{scoreText}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Based on your National ID history.</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
         
-        <Card className="p-6 shadow-elegant">
-          <div className="flex items-center gap-2 mb-2 text-muted-foreground">
-            <Banknote className="w-4 h-4" />
-            <p className="text-sm">Active Loans</p>
-          </div>
-          <h2 className="text-3xl font-bold">{activeLoans.length}</h2>
-        </Card>
+        <Link to="/my-loans" className="h-full">
+          <Card className="p-6 shadow-elegant h-full hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 h-full">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-muted-foreground">Active Loans</p>
+                <h2 className="text-3xl font-bold mt-2">{activeLoans.length}</h2>
+              </div>
+              <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Banknote className="w-5 h-5" />
+              </div>
+            </div>
+          </Card>
+        </Link>
 
-        <Card className="p-6 shadow-elegant flex flex-col">
-          <div className="flex items-center gap-2 mb-2 text-muted-foreground">
-            <Wallet className="w-4 h-4" />
-            <p className="text-sm">Total Outstanding</p>
-          </div>
-          <h2 className="text-3xl font-bold flex-1">FRW {totalBalance.toLocaleString()}</h2>
-          <div className="mt-4">
-            <Link to="/my-loans" className="text-primary text-sm font-semibold hover:underline">
-              View all loans &rarr;
-            </Link>
-          </div>
-        </Card>
+        <Link to="/my-loans" className="h-full">
+          <Card className="p-6 shadow-elegant h-full hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 h-full">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-muted-foreground">Total Outstanding</p>
+                <h2 className="text-3xl font-bold mt-2">FRW {totalBalance.toLocaleString()}</h2>
+              </div>
+              <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Wallet className="w-5 h-5" />
+              </div>
+            </div>
+          </Card>
+        </Link>
       </div>
     </div>
   );
