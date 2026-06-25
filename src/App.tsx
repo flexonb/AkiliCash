@@ -20,6 +20,7 @@ import DrawerPage from "./pages/Drawer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppShell } from "@/components/AppShell";
 import { ConfirmSaveProvider } from "@/components/ConfirmSave";
+import { AuthProvider } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
 
@@ -29,30 +30,32 @@ const wrap = (el: React.ReactNode) => (
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <ConfirmSaveProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/install" element={<Install />} />
-            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/" element={<Index />} />
-            <Route path="/clients" element={wrap(<Clients />)} />
-            <Route path="/clients/:id" element={wrap(<ClientDetail />)} />
-            <Route path="/loans" element={wrap(<Loans />)} />
-            <Route path="/loans/:id" element={wrap(<LoanDetail />)} />
-            <Route path="/payments" element={wrap(<Payments />)} />
-            <Route path="/expenses" element={wrap(<Expenses />)} />
-            <Route path="/settings" element={wrap(<Settings />)} />
-            <Route path="/audit" element={wrap(<AuditLog />)} />
-            <Route path="/drawer" element={wrap(<DrawerPage />)} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </ConfirmSaveProvider>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <ConfirmSaveProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/install" element={<Install />} />
+              <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+              <Route path="/" element={<Index />} />
+              <Route path="/clients" element={wrap(<Clients />)} />
+              <Route path="/clients/:id" element={wrap(<ClientDetail />)} />
+              <Route path="/loans" element={wrap(<Loans />)} />
+              <Route path="/loans/:id" element={wrap(<LoanDetail />)} />
+              <Route path="/payments" element={wrap(<Payments />)} />
+              <Route path="/expenses" element={wrap(<Expenses />)} />
+              <Route path="/settings" element={wrap(<Settings />)} />
+              <Route path="/audit" element={wrap(<AuditLog />)} />
+              <Route path="/drawer" element={wrap(<DrawerPage />)} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </ConfirmSaveProvider>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

@@ -1,10 +1,23 @@
-import { useEffect, useState } from "react";
-import { User, Session } from "firebase/auth";
+import { useEffect, useState, createContext, useContext } from "react";
+import { User } from "firebase/auth";
 import { api } from "@/lib/api";
 
 export type AppRole = "admin" | "staff" | "client";
 
-export function useAuth() {
+interface AuthContextType {
+  user: User | null;
+  profile: any | null;
+  userType: "company_admin" | "company_staff" | "client" | undefined;
+  isAdmin: boolean;
+  isStaff: boolean;
+  isClient: boolean;
+  loading: boolean;
+  refreshProfile: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -55,5 +68,17 @@ export function useAuth() {
   const isClient = userType === "client";
   const loading = sessionLoading || (!!user && !profileLoaded);
 
-  return { user, profile, userType, isAdmin, isStaff, isClient, loading, refreshProfile: () => user && fetchProfile(user.uid || user.id) };
+  return (
+    <AuthContext.Provider value={{ user, profile, userType, isAdmin, isStaff, isClient, loading, refreshProfile: async () => { if(user) await fetchProfile(user.uid || user.id); } }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 }

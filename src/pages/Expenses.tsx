@@ -189,11 +189,13 @@ export default function Expenses() {
     if (vErr) return toast.error(vErr.message);
     await logAudit({ entity_type: "expense", entity_id: editTarget.id, action: "void", note: editReason.trim(), before: editTarget });
     // Insert replacement
-    const { data: inserted, error: iErr } = await api.from("expenses").insert({
+    const { data: insertedList, error: iErr } = await api.from("expenses").insert({
       category: values.category, amount: values.amount, spent_at: values.spent_at,
       note: values.note || null, created_by: user?.id, replaces_id: editTarget.id,
-    }).select("id").single();
+    });
     if (iErr) return toast.error(iErr.message);
+    
+    const inserted = Array.isArray(insertedList) ? insertedList[0] : insertedList;
     if (inserted) {
       await logAudit({
         entity_type: "expense", entity_id: inserted.id, action: "replace",

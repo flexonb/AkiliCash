@@ -33,7 +33,7 @@ export default function Onboarding() {
           name: companyName,
           currency_code: "RWF",
           currency_symbol: "FRW"
-        }).select("id").single();
+        });
         
         if (compErr) throw compErr;
 
