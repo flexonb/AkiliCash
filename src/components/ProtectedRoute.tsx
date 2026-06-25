@@ -23,7 +23,8 @@ export function ProtectedRoute({ children, adminOnly = false }: { children: Reac
   if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
   
   // Clients have a specific dashboard, prevent them from accessing staff routes.
-  if (isClient && location.pathname !== "/" && !location.pathname.startsWith("/client")) {
+  const clientRoutes = ["/", "/my-loans", "/support"];
+  if (isClient && !clientRoutes.includes(location.pathname)) {
      return <Navigate to="/" replace />;
   }
 
