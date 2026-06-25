@@ -12,6 +12,7 @@ import { buildSchedule, type Frequency } from "@/lib/schedule";
 import { PaymentForm } from "@/components/PaymentForm";
 import { ClientPicker } from "@/components/ClientPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PageSkeleton } from "@/components/PageSkeleton";
 
 type Loan = {
   id: string;
@@ -52,41 +53,47 @@ export default function Payments() {
   const [showAll, setShowAll] = useState(false);
   const [picker, setPicker] = useState(false);
   const [active, setActive] = useState<{ loanId: string; balance: number; suggested: number } | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
-    // Offline-first reads — fall back to local cache when there is no network.
-    const [allLoans, clients, allPays] = await Promise.all([
-      loadTableOffline<any>("loans", "id, client_id, principal, total_repayable, start_date, duration_months, payment_frequency, status", profile?.company_id),
-      loadTableOffline<any>("clients", "id, full_name, phone", profile?.company_id),
-      loadTableOffline<any>("payments", "id, amount, paid_at, method, reference, loan_id, voided_at, created_by", profile?.company_id),
-    ]);
-    const clientById = new Map<string, any>(clients.map((c: any) => [c.id, c]));
-    const list: Loan[] = allLoans
-      .filter((l: any) => l.status === "active" || l.status === "approved")
-      .map((l: any) => ({
-        ...l,
-        clients: clientById.get(l.client_id)
-          ? { id: l.client_id, full_name: clientById.get(l.client_id).full_name, phone: clientById.get(l.client_id).phone }
-          : null,
-      })) as any;
-    setLoans(list);
+    setLoading(true);
+    try {
+      // Offline-first reads — fall back to local cache when there is no network.
+      const [allLoans, clients, allPays] = await Promise.all([
+        loadTableOffline<any>("loans", "id, client_id, principal, total_repayable, start_date, duration_months, payment_frequency, status", profile?.company_id),
+        loadTableOffline<any>("clients", "id, full_name, phone", profile?.company_id),
+        loadTableOffline<any>("payments", "id, amount, paid_at, method, reference, loan_id, voided_at, created_by", profile?.company_id),
+      ]);
+      const clientById = new Map<string, any>(clients.map((c: any) => [c.id, c]));
+      const list: Loan[] = allLoans
+        .filter((l: any) => l.status === "active" || l.status === "approved")
+        .map((l: any) => ({
+          ...l,
+          clients: clientById.get(l.client_id)
+            ? { id: l.client_id, full_name: clientById.get(l.client_id).full_name, phone: clientById.get(l.client_id).phone }
+            : null,
+        })) as any;
+      setLoans(list);
 
-    const livePays = (allPays as any[]).filter((p) => !p.voided_at);
-    const map: Record<string, Payment[]> = {};
-    livePays.forEach((p: any) => { (map[p.loan_id] ||= []).push(p as Payment); });
-    setPaymentsByLoan(map);
+      const livePays = (allPays as any[]).filter((p) => !p.voided_at);
+      const map: Record<string, Payment[]> = {};
+      livePays.forEach((p: any) => { (map[p.loan_id] ||= []).push(p as Payment); });
+      setPaymentsByLoan(map);
 
-    const sevenAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const loanById = new Map<string, any>(allLoans.map((l: any) => [l.id, l]));
-    const rec: Payment[] = livePays
-      .filter((p: any) => +new Date(p.paid_at) >= sevenAgo)
-      .sort((a: any, b: any) => +new Date(b.paid_at) - +new Date(a.paid_at))
-      .map((p: any) => {
-        const loan = loanById.get(p.loan_id);
-        const c = loan ? clientById.get(loan.client_id) : null;
-        return { ...p, loans: loan ? { client_id: loan.client_id, clients: c ? { full_name: c.full_name } : null } : null } as Payment;
-      });
-    setRecent(rec);
+      const sevenAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const loanById = new Map<string, any>(allLoans.map((l: any) => [l.id, l]));
+      const rec: Payment[] = livePays
+        .filter((p: any) => +new Date(p.paid_at) >= sevenAgo)
+        .sort((a: any, b: any) => +new Date(b.paid_at) - +new Date(a.paid_at))
+        .map((p: any) => {
+          const loan = loanById.get(p.loan_id);
+          const c = loan ? clientById.get(loan.client_id) : null;
+          return { ...p, loans: loan ? { client_id: loan.client_id, clients: c ? { id: c.id, full_name: c.full_name } : null } : null } as Payment;
+        });
+      setRecent(rec);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -163,6 +170,8 @@ export default function Payments() {
     }
     setActive({ loanId: candidate.loan.id, balance: candidate.balance, suggested: candidate.dueAmount || 0 });
   }
+
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="space-y-6">

@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 import { useSettings, formatMoney } from "@/hooks/useSettings";
 import { LoanForm } from "@/components/LoanForm";
 import { cn } from "@/lib/utils";
+import { PageSkeleton } from "@/components/PageSkeleton";
 
 import { buildSchedule, allocatePayments } from "@/lib/schedule";
 
@@ -30,26 +31,34 @@ export default function Loans() {
   const [payments, setPayments] = useState<any[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
   const [openNew, setOpenNew] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
     if (!profile?.company_id) return;
-    const [{ data: loans }, { data: pays }] = await Promise.all([
-      api
-        .from("loans")
-        .select("id, principal, charge, total_repayable, interest_rate, duration_months, status, start_date, created_at, client_id, payment_frequency, clients(full_name, phone)")
-        .eq("company_id", profile.company_id),
-      api.from("payments").select("id, amount, loan_id, paid_at").eq("company_id", profile.company_id).is("voided_at", null),
-    ]);
-    
-    // Sort in memory so loans missing created_at are still included
-    const sortedLoans = (loans ?? []).sort((a: any, b: any) => {
-      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return bTime - aTime;
-    });
-    
-    setRows(sortedLoans);
-    setPayments(pays ?? []);
+    setLoading(true);
+    try {
+      const [{ data: loans }, { data: pays }] = await Promise.all([
+        api
+          .from("loans")
+          .select("id, principal, charge, total_repayable, interest_rate, duration_months, status, start_date, created_at, client_id, payment_frequency, clients(id, full_name, phone)")
+          .eq("company_id", profile.company_id),
+        api.from("payments").select("id, amount, loan_id, paid_at").eq("company_id", profile.company_id).is("voided_at", null),
+      ]);
+      
+      // Sort in memory so loans missing created_at are still included
+      const sortedLoans = (loans ?? []).sort((a: any, b: any) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      });
+      
+      setRows(sortedLoans);
+      setPayments(pays ?? []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, [profile?.company_id]);
@@ -111,6 +120,8 @@ export default function Loans() {
         : filter === "overdue"
           ? rows.filter((l) => overdueIds.has(l.id))
           : rows.filter((l) => l.status === filter);
+
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="space-y-6">

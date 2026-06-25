@@ -18,6 +18,7 @@ import { logAudit } from "@/lib/audit";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { sbInsert } from "@/lib/offline/sb";
+import { PageSkeleton } from "@/components/PageSkeleton";
 
 const schema = z.object({
   category: z.string().trim().min(1).max(50),
@@ -105,21 +106,28 @@ export default function Expenses() {
   });
   const recFreq = recForm.watch("frequency");
 
+  const [pageLoading, setPageLoading] = useState(true);
+
   const load = async () => {
     if (!profile?.company_id) return;
-    const [{ data: e }, { data: r }] = await Promise.all([
-      api.from("expenses").select("*").eq("company_id", profile.company_id).is("voided_at", null).order("spent_at", { ascending: false }).limit(500),
-      api.from("recurring_expenses").select("*").eq("company_id", profile.company_id),
-    ]);
-    setRows(e ?? []);
-    
-    // Sort locally to handle missing created_at
-    const sortedRecurring = (r ?? []).sort((a: any, b: any) => {
-      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return bTime - aTime;
-    });
-    setRecurring(sortedRecurring);
+    setPageLoading(true);
+    try {
+      const [{ data: e }, { data: r }] = await Promise.all([
+        api.from("expenses").select("*").eq("company_id", profile.company_id).is("voided_at", null).order("spent_at", { ascending: false }).limit(500),
+        api.from("recurring_expenses").select("*").eq("company_id", profile.company_id),
+      ]);
+      setRows(e ?? []);
+      
+      // Sort locally to handle missing created_at
+      const sortedRecurring = (r ?? []).sort((a: any, b: any) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      });
+      setRecurring(sortedRecurring);
+    } finally {
+      setPageLoading(false);
+    }
   };
   useEffect(() => { load(); }, [profile?.company_id]);
 
@@ -327,6 +335,8 @@ export default function Expenses() {
   }
 
   const BAR_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--success))"];
+
+  if (pageLoading) return <PageSkeleton />;
 
   return (
     <div className="space-y-6 w-full max-w-full overflow-x-hidden">

@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/AppCard";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search } from "lucide-react";
 import { ClientForm } from "@/components/ClientForm";
+import { PageSkeleton } from "@/components/PageSkeleton";
 
 interface Client { id: string; full_name: string; phone: string; address: string | null; status: string; created_at: string }
 
@@ -19,11 +20,17 @@ export default function Clients() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
     if (!profile?.company_id) return;
-    const { data } = await api.from("clients").select("*").eq("company_id", profile.company_id).order("full_name", { ascending: true });
-    setClients((data ?? []) as Client[]);
+    setLoading(true);
+    try {
+      const { data } = await api.from("clients").select("*").eq("company_id", profile.company_id).order("full_name", { ascending: true });
+      setClients((data ?? []) as Client[]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, [profile?.company_id]);
@@ -33,6 +40,8 @@ export default function Clients() {
     .filter((c) =>
       c.full_name.toLowerCase().includes(q.toLowerCase()) || c.phone.includes(q)
     );
+
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="space-y-6">

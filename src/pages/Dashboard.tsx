@@ -34,6 +34,7 @@ export default function Dashboard() {
   const { settings } = useSettings();
   const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const [stats, setStats] = useState({ activeLoans: 0, outstanding: 0, overdue: 0, dayCollected: 0, monthCollected: 0, clients: 0, dayCashOut: 0, dayExpenses: 0, dayFees: 0, drawerBalance: 0 });
+  const [loadingStats, setLoadingStats] = useState(true);
   const [closeOpen, setCloseOpen] = useState(false);
   const [openOpen, setOpenOpen] = useState(false);
   const [session, setSession] = useState<OpenSession | null>(null);
@@ -187,6 +188,7 @@ export default function Dashboard() {
         dayFees,
         drawerBalance,
       });
+      setLoadingStats(false);
     })();
   }, [user, session, refreshKey]);
 
@@ -230,7 +232,7 @@ export default function Dashboard() {
     { label: "Total clients", value: stats.clients, icon: Users, link: "/clients" },
   ], [stats, settings, session]);
 
-  if (authLoading) return <PageSkeleton />;
+  if (authLoading || loadingStats) return <PageSkeleton />;
   if (!user) return <Navigate to="/auth" replace />;
 
   const sessionFromPriorDay = session && new Date(session.opened_at).toDateString() !== new Date().toDateString();

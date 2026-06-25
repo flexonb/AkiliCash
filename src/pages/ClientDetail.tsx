@@ -50,36 +50,50 @@ export default function ClientDetail() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+
   const load = async () => {
     if (!id || !profile?.company_id) return;
-    const [{ data: c }, { data: g }, { data: l }] = await Promise.all([
-      api.from("clients").select("*").eq("id", id).eq("company_id", profile.company_id).maybeSingle(),
-      api.from("guarantors").select("*").eq("client_id", id).eq("company_id", profile.company_id),
-      api.from("loans").select("*").eq("client_id", id).eq("company_id", profile.company_id),
-    ]);
-    setClient(c);
-    setGuarantors(g ?? []);
-    
-    // Sort locally to handle missing created_at
-    const sortedLoans = (l ?? []).sort((a: any, b: any) => {
-      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return bTime - aTime;
-    });
-    setLoans(sortedLoans);
-    if (c?.id_photo_path) {
-      const { data } = await api.storage.from("client-photos").createSignedUrl(c.id_photo_path, 3600);
-      setIdPhotoUrl(data?.signedUrl ?? null);
-    } else setIdPhotoUrl(null);
-    if (c?.passport_photo_path) {
-      const { data } = await api.storage.from("client-photos").createSignedUrl(c.passport_photo_path, 3600);
-      setPassportPhotoUrl(data?.signedUrl ?? null);
-    } else setPassportPhotoUrl(null);
+    setLoading(true);
+    try {
+      const [{ data: c }, { data: g }, { data: l }] = await Promise.all([
+        api.from("clients").select("*").eq("id", id).eq("company_id", profile.company_id).maybeSingle(),
+        api.from("guarantors").select("*").eq("client_id", id).eq("company_id", profile.company_id),
+        api.from("loans").select("*").eq("client_id", id).eq("company_id", profile.company_id),
+      ]);
+      setClient(c);
+      setGuarantors(g ?? []);
+      
+      // Sort locally to handle missing created_at
+      const sortedLoans = (l ?? []).sort((a: any, b: any) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      });
+      setLoans(sortedLoans);
+      if (c?.id_photo_path) {
+        try {
+          const { data } = await api.storage.from("client-photos").createSignedUrl(c.id_photo_path, 3600);
+          setIdPhotoUrl(data?.signedUrl ?? null);
+        } catch (e) { console.error("Could not load ID photo", e); }
+      } else setIdPhotoUrl(null);
+      if (c?.passport_photo_path) {
+        try {
+          const { data } = await api.storage.from("client-photos").createSignedUrl(c.passport_photo_path, 3600);
+          setPassportPhotoUrl(data?.signedUrl ?? null);
+        } catch (e) { console.error("Could not load passport photo", e); }
+      } else setPassportPhotoUrl(null);
+    } catch (error) {
+      console.error("Error loading client", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, [id, profile?.company_id]);
 
-  if (!client) return <PageSkeleton />;
+  if (loading) return <PageSkeleton />;
+  if (!client) return <div className="p-8 text-center text-muted-foreground">Client not found.</div>;
 
   const isDormant = client.status === "dormant";
 
