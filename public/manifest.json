@@ -1,0 +1,16 @@
+{
+  "name": "AkiliCash",
+  "short_name": "AkiliCash",
+  "description": "Modern Lending Management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d4f54",
+  "icons": [
+    {
+      "src": "/app-icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ]
+}
