@@ -63,12 +63,18 @@ export default function ClientDashboard() {
       const { data: pays } = await api.from("payments").in("loan_id", loanIds);
       const validPays = (pays || []).filter((p: any) => !p.voided_at);
 
-      // 4. Determine company details (since we added multi-tenancy, loans/clients should map to companies eventually. For now, use basic RWF)
-      // Since we don't have company_id deeply linked in old schema, we'll mock it or use RWF.
+      // 4. Determine company details
+      const companyIds = Array.from(new Set(allLoans.map((l: any) => l.company_id).filter(Boolean)));
+      let companies: any[] = [];
+      if (companyIds.length > 0) {
+        const { data } = await api.from("settings").in("id", companyIds);
+        if (data) companies = data;
+      }
 
       const unified: UnifiedLoan[] = allLoans.map((l: any) => {
         const loanPays = validPays.filter((p: any) => p.loan_id === l.id);
         const paid = loanPays.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+        const company = companies.find((c: any) => c.id === l.company_id);
         
         const sched = buildSchedule({
           startDate: l.start_date,
@@ -82,7 +88,7 @@ export default function ClientDashboard() {
         
         return {
           id: l.id,
-          companyName: "Lending Partner", // Placeholder for company name
+          companyName: company?.company_name || "Lending Partner",
           principal: Number(l.principal),
           charge: Number(l.charge || 0),
           total_repayable: Number(l.total_repayable),
@@ -92,7 +98,7 @@ export default function ClientDashboard() {
           payment_frequency: l.payment_frequency,
           paid,
           balance: Math.max(0, Number(l.total_repayable) - paid),
-          currencySymbol: "FRW", // Default
+          currencySymbol: company?.currency_symbol || "FRW",
           allocations,
           nextDueAmt: nextDue ? nextDue.amount : undefined,
           nextDueDate: nextDue ? nextDue.due : undefined,
@@ -185,7 +191,7 @@ export default function ClientDashboard() {
       <div className="flex flex-wrap gap-3 mt-6">
         <Dialog>
           <DialogTrigger asChild>
-            <button className="flex-1 min-w-[200px] bg-primary text-primary-foreground hover:bg-primary/90 p-4 rounded-xl shadow-sm text-center font-semibold transition-colors">
+            <button id="payments" className="flex-1 min-w-[200px] bg-primary text-primary-foreground hover:bg-primary/90 p-4 rounded-xl shadow-sm text-center font-semibold transition-colors">
               Make a Payment
             </button>
           </DialogTrigger>
@@ -208,7 +214,7 @@ export default function ClientDashboard() {
         
         <Dialog>
           <DialogTrigger asChild>
-            <button className="flex-1 min-w-[200px] bg-secondary text-secondary-foreground hover:bg-secondary/80 p-4 rounded-xl shadow-sm text-center font-semibold transition-colors">
+            <button id="support" className="flex-1 min-w-[200px] bg-secondary text-secondary-foreground hover:bg-secondary/80 p-4 rounded-xl shadow-sm text-center font-semibold transition-colors">
               Need Help?
             </button>
           </DialogTrigger>
@@ -228,7 +234,9 @@ export default function ClientDashboard() {
         </Dialog>
       </div>
 
-      <h2 className="text-xl font-bold mt-8 mb-4">Your Loans</h2>
+      <div id="loans">
+        <h2 className="text-xl font-bold mt-8 mb-4">Your Loans</h2>
+      </div>
       {loans.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground border-dashed">
           <Wallet className="w-12 h-12 mx-auto mb-4 opacity-20" />
