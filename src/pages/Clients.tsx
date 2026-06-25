@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search } from "lucide-react";
 import { ClientForm } from "@/components/ClientForm";
 import { PageSkeleton } from "@/components/PageSkeleton";
+import { calculateScore } from "@/lib/score";
 
-interface Client { id: string; full_name: string; phone: string; address: string | null; status: string; created_at: string }
+interface Client { id: string; full_name: string; phone: string; address: string | null; status: string; created_at: string; national_id?: string; loans?: any[] }
 
 type Filter = "all" | "active" | "dormant";
 
@@ -26,9 +27,17 @@ export default function Clients() {
     if (!profile?.company_id) return;
     setLoading(true);
     try {
-      const { data } = await api.from("clients").select("*").eq("company_id", profile.company_id);
-      const sorted = (data ?? []).sort((a: any, b: any) => (a.full_name || "").localeCompare(b.full_name || ""));
-      setClients(sorted as Client[]);
+      const [{ data: cData }, { data: lData }] = await Promise.all([
+        api.from("clients").select("*").eq("company_id", profile.company_id),
+        api.from("loans").select("client_id, status").eq("company_id", profile.company_id),
+      ]);
+      const sorted = (cData ?? []).sort((a: any, b: any) => (a.full_name || "").localeCompare(b.full_name || ""));
+      
+      const clientsWithLoans = sorted.map((c: any) => ({
+        ...c,
+        loans: (lData ?? []).filter((l: any) => l.client_id === c.id)
+      }));
+      setClients(clientsWithLoans as Client[]);
     } finally {
       setLoading(false);
     }
@@ -71,6 +80,7 @@ export default function Clients() {
       <div className="grid gap-3">
         {filtered.map((c) => {
           const dormant = (c.status ?? "active") === "dormant";
+          const { score, color } = calculateScore(c.loans || []);
           return (
             <Link key={c.id} to={`/clients/${c.id}`}>
               <Card className={`p-4 hover:shadow-elegant transition-shadow ${dormant ? "opacity-70" : ""}`}>
@@ -82,6 +92,10 @@ export default function Clients() {
                       {dormant && <Badge variant="secondary">Dormant</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground truncate">{c.phone}{c.address ? ` · ${c.address}` : ""}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-muted-foreground">AkiliScore</p>
+                    <p className={`font-bold ${color}`}>{score}</p>
                   </div>
                 </div>
               </Card>

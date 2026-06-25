@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import { Card } from "@/components/ui/AppCard";
 import { Banknote, Wallet } from "lucide-react";
 import { PageSkeleton } from "@/components/PageSkeleton";
-import { buildSchedule, allocatePayments } from "@/lib/schedule";
+import { calculateScore } from "@/lib/score";
 
 interface UnifiedLoan {
   id: string;
@@ -123,34 +123,7 @@ export default function ClientDashboard() {
   const activeLoans = loans.filter(l => l.status === "active" || l.status === "approved");
   const totalBalance = activeLoans.reduce((sum, l) => sum + l.balance, 0);
 
-  // AkiliScore calculation (Simplified CRB logic)
-  let score = 0;
-  let scoreText = "Newbie";
-  let scoreColor = "text-muted-foreground";
-
-  if (loans.length > 0) {
-    const completed = loans.filter(l => l.status === "completed").length;
-    const defaulted = loans.filter(l => l.status === "defaulted").length;
-    
-    score = 500; // Base score
-    score += completed * 50;
-    score -= defaulted * 150;
-    
-    if (defaulted > 0) {
-      scoreText = "High Risk";
-      scoreColor = "text-destructive";
-    } else if (completed > 0 && activeLoans.length > 0) {
-      scoreText = "Excellent";
-      scoreColor = "text-success";
-      score = Math.max(700, score);
-    } else if (completed > 0) {
-      scoreText = "Good";
-      scoreColor = "text-primary";
-    } else {
-      scoreText = "Fair";
-      scoreColor = "text-yellow-600";
-    }
-  }
+  const { score, text: scoreText, color: scoreColor } = calculateScore(loans);
 
   return (
     <div className="space-y-6">

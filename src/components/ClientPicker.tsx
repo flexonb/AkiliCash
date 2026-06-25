@@ -21,7 +21,7 @@ export const ClientPicker = ({ value, onChange }: any) => {
   const selectedClient = clients.find(c => c.id === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={true}>
+    <Popover open={open} onOpenChange={setOpen} modal={false}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -36,7 +36,7 @@ export const ClientPicker = ({ value, onChange }: any) => {
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
           <CommandInput placeholder="Search client by name or ID..." />
-          <CommandList className="max-h-[200px] overflow-y-auto">
+          <CommandList className="max-h-[300px] overflow-y-auto">
             <CommandEmpty>No client found.</CommandEmpty>
             <CommandGroup>
               {clients.map((client) => (
@@ -44,6 +44,11 @@ export const ClientPicker = ({ value, onChange }: any) => {
                   key={client.id}
                   value={`${client.full_name} ${client.national_id}`}
                   onSelect={() => {
+                    onChange(client.id);
+                    setOpen(false);
+                  }}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
                     onChange(client.id);
                     setOpen(false);
                   }}

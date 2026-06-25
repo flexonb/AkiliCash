@@ -7,6 +7,7 @@ import { loadTableOffline } from "@/lib/offline/sb";
 import { CloseDrawerDialog } from "@/components/CloseDrawerDialog";
 import { OpenDrawerDialog } from "@/components/OpenDrawerDialog";
 import { useSettings, formatMoney } from "@/hooks/useSettings";
+import { calculateScore } from "@/lib/score";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, Navigate } from "react-router-dom";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -33,7 +34,7 @@ interface OpenSession {
 export default function Dashboard() {
   const { settings } = useSettings();
   const { user, profile, isAdmin, loading: authLoading } = useAuth();
-  const [stats, setStats] = useState({ activeLoans: 0, outstanding: 0, overdue: 0, dayCollected: 0, monthCollected: 0, clients: 0, dayCashOut: 0, dayExpenses: 0, dayFees: 0, drawerBalance: 0 });
+  const [stats, setStats] = useState({ activeLoans: 0, outstanding: 0, overdue: 0, dayCollected: 0, monthCollected: 0, clients: 0, dayCashOut: 0, dayExpenses: 0, dayFees: 0, drawerBalance: 0, averageScore: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
   const [closeOpen, setCloseOpen] = useState(false);
   const [openOpen, setOpenOpen] = useState(false);
@@ -178,6 +179,18 @@ export default function Dashboard() {
         drawerBalance = Number(session.opening_balance) + cashInSince - cashOutSince - expensesSince;
       }
 
+      let totalScore = 0;
+      let scoredClients = 0;
+      clientsAll.forEach((c: any) => {
+        const clientLoans = loansAll.filter((l: any) => l.client_id === c.id);
+        if (clientLoans.length > 0) {
+          const { score } = calculateScore(clientLoans);
+          totalScore += score;
+          scoredClients += 1;
+        }
+      });
+      const averageScore = scoredClients > 0 ? Math.round(totalScore / scoredClients) : 0;
+
       setStats({
         activeLoans: active,
         outstanding,
@@ -189,6 +202,7 @@ export default function Dashboard() {
         dayExpenses,
         dayFees,
         drawerBalance,
+        averageScore,
       });
       setLoadingStats(false);
     })();
@@ -232,6 +246,7 @@ export default function Dashboard() {
     { label: "Active loans", value: stats.activeLoans, icon: Banknote, link: "/loans" },
     { label: "Overdue loans", value: stats.overdue, icon: AlertTriangle, link: "/loans", warn: true },
     { label: "Total clients", value: stats.clients, icon: Users, link: "/clients" },
+    { label: "Avg AkiliScore", value: stats.averageScore || "---", icon: TrendingUp, link: "/clients" },
   ], [stats, settings, session]);
 
   if (authLoading || loadingStats) return <PageSkeleton />;

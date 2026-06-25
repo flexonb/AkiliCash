@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { ClientPicker } from "@/components/ClientPicker";
+import { calculateScore } from "@/lib/score";
 
 export const LoanForm = ({ open, onOpenChange, pickClient, clientId, onCreated }: any) => {
   const { user, profile } = useAuth();
@@ -20,11 +21,26 @@ export const LoanForm = ({ open, onOpenChange, pickClient, clientId, onCreated }
   const [durationMonths, setDurationMonths] = useState("");
   const [frequency, setFrequency] = useState("monthly");
 
+  const [clientLoans, setClientLoans] = useState<any[]>([]);
+  const targetClient = pickClient ? selectedClientId : clientId;
+
+  useEffect(() => {
+    if (!targetClient) {
+      setClientLoans([]);
+      return;
+    }
+    api.from("loans").select("*").eq("client_id", targetClient)
+      .then(({ data }) => setClientLoans(data || []))
+      .catch(console.error);
+  }, [targetClient]);
+
+  const scoreData = targetClient ? calculateScore(clientLoans) : null;
+  const hasActiveLoan = clientLoans.some((l) => l.status === "active" || l.status === "approved" || l.status === "pending");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !profile) return;
     
-    const targetClient = pickClient ? selectedClientId : clientId;
     if (!targetClient) {
       toast.error("Please select a client");
       return;
@@ -85,6 +101,28 @@ export const LoanForm = ({ open, onOpenChange, pickClient, clientId, onCreated }
             <div className="space-y-2">
               <Label>Client</Label>
               <ClientPicker value={selectedClientId} onChange={setSelectedClientId} />
+            </div>
+          )}
+
+          {targetClient && scoreData && (
+            <div className="p-3 bg-muted rounded-md space-y-2 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-muted-foreground">AkiliScore:</span>
+                <span className={`font-bold ${scoreData.color}`}>{scoreData.score} ({scoreData.text})</span>
+              </div>
+              
+              {hasActiveLoan && (
+                <div className="flex items-start gap-2 text-destructive bg-destructive/10 p-2 rounded">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p><strong>Warning:</strong> This client already has an active or pending loan. Giving multiple loans increases default risk.</p>
+                </div>
+              )}
+              {scoreData.defaultedLoans > 0 && (
+                <div className="flex items-start gap-2 text-destructive bg-destructive/10 p-2 rounded">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p><strong>Warning:</strong> This client has {scoreData.defaultedLoans} previously defaulted loan(s).</p>
+                </div>
+              )}
             </div>
           )}
 

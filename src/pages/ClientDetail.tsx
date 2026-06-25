@@ -23,6 +23,7 @@ import { ClientForm } from "@/components/ClientForm";
 import { toast } from "sonner";
 import { CallButton } from "@/components/CallButton";
 import { PageSkeleton } from "@/components/PageSkeleton";
+import { calculateScore } from "@/lib/score";
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
@@ -118,6 +119,8 @@ export default function ClientDetail() {
   const hasBusiness = client.business_name || client.business_district || client.business_sub_county || client.business_village || client.business_nearby;
   const hasCollateral = client.land_owner_name || client.block_no || client.plot_no || client.volume || client.folio || client.vehicle_reg_no;
   const hasPhotos = idPhotoUrl || passportPhotoUrl;
+  
+  const { score, text: scoreText, color: scoreColor } = calculateScore(loans);
 
   return (
     <div className="space-y-6">
@@ -134,6 +137,8 @@ export default function ClientDetail() {
               <Badge variant={isDormant ? "secondary" : "default"}>{isDormant ? "Dormant" : "Active"}</Badge>
             </div>
             <div className="flex items-center gap-2 flex-wrap text-muted-foreground">
+              <span className={`font-semibold ${scoreColor}`}>AkiliScore: {score} ({scoreText})</span>
+              <span>·</span>
               <span>{client.phone}</span>
               <CallButton phone={client.phone} name={client.full_name} />
               {client.alt_phone && (
