@@ -54,11 +54,18 @@ export default function ClientDetail() {
     const [{ data: c }, { data: g }, { data: l }] = await Promise.all([
       api.from("clients").select("*").eq("id", id).eq("company_id", profile.company_id).maybeSingle(),
       api.from("guarantors").select("*").eq("client_id", id).eq("company_id", profile.company_id),
-      api.from("loans").select("*").eq("client_id", id).eq("company_id", profile.company_id).order("created_at", { ascending: false }),
+      api.from("loans").select("*").eq("client_id", id).eq("company_id", profile.company_id),
     ]);
     setClient(c);
     setGuarantors(g ?? []);
-    setLoans(l ?? []);
+    
+    // Sort locally to handle missing created_at
+    const sortedLoans = (l ?? []).sort((a: any, b: any) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
+    });
+    setLoans(sortedLoans);
     if (c?.id_photo_path) {
       const { data } = await api.storage.from("client-photos").createSignedUrl(c.id_photo_path, 3600);
       setIdPhotoUrl(data?.signedUrl ?? null);

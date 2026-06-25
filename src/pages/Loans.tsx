@@ -37,11 +37,18 @@ export default function Loans() {
       api
         .from("loans")
         .select("id, principal, charge, total_repayable, interest_rate, duration_months, status, start_date, created_at, client_id, payment_frequency, clients(full_name, phone)")
-        .eq("company_id", profile.company_id)
-        .order("created_at", { ascending: false }),
+        .eq("company_id", profile.company_id),
       api.from("payments").select("id, amount, loan_id, paid_at").eq("company_id", profile.company_id).is("voided_at", null),
     ]);
-    setRows(loans ?? []);
+    
+    // Sort in memory so loans missing created_at are still included
+    const sortedLoans = (loans ?? []).sort((a: any, b: any) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
+    });
+    
+    setRows(sortedLoans);
     setPayments(pays ?? []);
   };
 

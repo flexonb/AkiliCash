@@ -118,8 +118,12 @@ class ApiQueryBuilder {
           return { data: null, error: new Error("Array insert not supported in shim") };
         }
         const id = payload.id || crypto.randomUUID();
-        await setDoc(doc(db, this.table, String(id)), payload);
-        const data = { id, ...payload };
+        const payloadWithDefaults = {
+          created_at: new Date().toISOString(),
+          ...payload
+        };
+        await setDoc(doc(db, this.table, String(id)), payloadWithDefaults);
+        const data = { id, ...payloadWithDefaults };
         if (this._select === "id") return { data: this._single ? data : [data], error: null };
         return { data: this._single ? data : [data], error: null };
       } catch(e) { return { data: null, error: e }; }

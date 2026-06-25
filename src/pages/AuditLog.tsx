@@ -50,10 +50,17 @@ export default function AuditLog() {
         .from("audit_log")
         .select("*")
         .eq("company_id", profile.company_id)
-        .order("created_at", { ascending: false })
         .limit(500);
       const list = (data ?? []) as Row[];
-      setRows(list);
+      
+      // Sort locally to handle missing created_at
+      const sortedList = list.sort((a: any, b: any) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      });
+      
+      setRows(sortedList);
       const ids = Array.from(new Set(list.map((r) => r.actor_id).filter(Boolean) as string[]));
       if (ids.length) {
         const { data: profs } = await api.from("profiles").select("id, full_name").in("id", ids);

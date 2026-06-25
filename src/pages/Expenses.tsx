@@ -109,10 +109,17 @@ export default function Expenses() {
     if (!profile?.company_id) return;
     const [{ data: e }, { data: r }] = await Promise.all([
       api.from("expenses").select("*").eq("company_id", profile.company_id).is("voided_at", null).order("spent_at", { ascending: false }).limit(500),
-      api.from("recurring_expenses").select("*").eq("company_id", profile.company_id).order("created_at", { ascending: false }),
+      api.from("recurring_expenses").select("*").eq("company_id", profile.company_id),
     ]);
     setRows(e ?? []);
-    setRecurring(r ?? []);
+    
+    // Sort locally to handle missing created_at
+    const sortedRecurring = (r ?? []).sort((a: any, b: any) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
+    });
+    setRecurring(sortedRecurring);
   };
   useEffect(() => { load(); }, [profile?.company_id]);
 

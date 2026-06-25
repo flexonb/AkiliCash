@@ -76,7 +76,7 @@ export default function LoanDetail() {
 
   const totalPaid = payments.reduce((s, p) => s + Number(p.amount), 0);
   const balance = Math.max(0, Number(loan.total_repayable) - totalPaid);
-  const isOwner = loan.created_by === user?.id;
+  const isOwner = loan.created_by === user?.uid;
 
   async function update(patch: any, successMsg: string, summary?: string) {
     if (summary) {
@@ -99,7 +99,7 @@ export default function LoanDetail() {
     setBusy(true);
     const { data, error } = await api.from("payments").update({
       voided_at: new Date().toISOString(),
-      voided_by: user?.id,
+      voided_by: user?.uid,
       void_reason: voidReason.trim(),
     }).eq("id", voidTarget.id).is("voided_at", null).select("id");
     setBusy(false);
@@ -129,7 +129,7 @@ export default function LoanDetail() {
       ? today.toISOString().slice(0, 10)
       : new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     await update(
-      { status: "approved", approved_by: user?.id, approved_at: today.toISOString(), start_date: startDate },
+      { status: "approved", approved_by: user?.uid, approved_at: today.toISOString(), start_date: startDate },
       "Loan approved",
     );
   };
@@ -176,7 +176,7 @@ export default function LoanDetail() {
     await update(
       {
         status: "rejected",
-        rejected_by: user?.id,
+        rejected_by: user?.uid,
         rejected_at: new Date().toISOString(),
         rejected_reason: rejectReason || null,
       },
