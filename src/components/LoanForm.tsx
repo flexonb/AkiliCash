@@ -8,24 +8,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { ClientPicker } from "@/components/ClientPicker";
 
 export const LoanForm = ({ open, onOpenChange, pickClient, clientId, onCreated }: any) => {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [clients, setClients] = useState<any[]>([]);
   
   const [selectedClientId, setSelectedClientId] = useState(clientId || "");
   const [principal, setPrincipal] = useState("");
   const [interestRate, setInterestRate] = useState("");
   const [durationMonths, setDurationMonths] = useState("");
   const [frequency, setFrequency] = useState("monthly");
-
-  useEffect(() => {
-    if (pickClient && profile?.company_id && open) {
-      api.from("clients").select("id, full_name, national_id").eq("company_id", profile.company_id)
-        .then(({ data }) => setClients(data || []));
-    }
-  }, [pickClient, profile, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,18 +84,7 @@ export const LoanForm = ({ open, onOpenChange, pickClient, clientId, onCreated }
           {pickClient && (
             <div className="space-y-2">
               <Label>Client</Label>
-              <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((c: any) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.full_name} ({c.national_id})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ClientPicker value={selectedClientId} onChange={setSelectedClientId} />
             </div>
           )}
 

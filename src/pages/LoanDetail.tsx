@@ -154,7 +154,7 @@ export default function LoanDetail() {
     setOpenDates(false);
     const disbursedAt = new Date(editDisbursedDate + "T12:00:00").toISOString();
     await update(
-      { status: "active", disbursed_at: disbursedAt, start_date: editStartDate || loan.start_date },
+      { status: "active", disbursed_at: disbursedAt, disbursed_by: user?.uid, start_date: editStartDate || loan.start_date },
       "Marked as disbursed",
       `Disburse on ${editDisbursedDate}, first installment from ${editStartDate}?`,
     );

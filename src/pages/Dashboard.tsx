@@ -114,7 +114,7 @@ export default function Dashboard() {
       // Cash-out only counts loans that have actually been disbursed.
       // Approval alone does NOT move cash.
       const isDisbursed = (l: any) =>
-        !!l.disbursed_at || ["active", "completed", "defaulted"].includes(l.status);
+        !!l.disbursed_at || ["approved", "active", "completed", "defaulted"].includes(l.status);
 
       let dayCashOut = 0;
       let dayFees = 0;
@@ -129,7 +129,7 @@ export default function Dashboard() {
         const charge = Math.max(0, Number(l.charge ?? 0));
         const net = Math.max(0, principal - charge);
         if (isDisbursed(l)) {
-          const ts = l.disbursed_at ?? `${l.start_date}T00:00:00`;
+          const ts = l.disbursed_at ?? l.approved_at ?? `${l.start_date}T00:00:00`;
           const at = new Date(ts);
           if (at >= startDay) {
             dayCashOut += net;
@@ -169,8 +169,9 @@ export default function Dashboard() {
         const cashInSince = pays.filter((p: any) => p.created_by === ownerId && new Date(p.paid_at).getTime() >= sinceTs).reduce((s: number, p: any) => s + Number(p.amount), 0);
         const cashOutSince = loansAll.filter((l: any) => {
           if (!isDisbursed(l)) return false;
-          if (l.created_by !== ownerId) return false;
-          const ts = l.disbursed_at ?? `${l.start_date}T00:00:00`;
+          const ownerField = l.disbursed_by || l.approved_by || l.created_by;
+          if (ownerField !== ownerId) return false;
+          const ts = l.disbursed_at ?? l.approved_at ?? `${l.start_date}T00:00:00`;
           return new Date(ts).getTime() >= sinceTs;
         }).reduce((s: number, l: any) => s + Math.max(0, Number(l.principal) - Number(l.charge ?? 0)), 0);
         const expensesSince = exps.filter((e: any) => e.created_by === ownerId && new Date(e.created_at).getTime() >= sinceTs).reduce((s: number, e: any) => s + Number(e.amount), 0);
